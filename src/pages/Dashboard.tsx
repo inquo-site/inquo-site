@@ -21,7 +21,7 @@ const Dashboard = () => {
     { id: 1, name: "Blog Generator", category: "writing", description: "Generate engaging blog posts in seconds" },
     { id: 2, name: "Code Generator", category: "coding", description: "Write code in multiple languages" },
     { id: 3, name: "Grammar Fixer", category: "writing", description: "Fix grammar and improve writing" },
-    { id: 4, name: "Image Generator", category: "design", description: "Create AI-powered images" },
+    { id: 4, name: "Image Generator", category: "design", description: "Create stunning AI images with OpenAI" },
     { id: 5, name: "Ad Copy Writer", category: "marketing", description: "Write compelling ad copy" },
     { id: 6, name: "Text Summarizer", category: "productivity", description: "Summarize long documents" },
   ];

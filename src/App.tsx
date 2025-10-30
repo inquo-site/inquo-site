@@ -15,6 +15,7 @@ import CodeGenerator from "./pages/tools/CodeGenerator";
 import GrammarFixer from "./pages/tools/GrammarFixer";
 import AdCopyWriter from "./pages/tools/AdCopyWriter";
 import TextSummarizer from "./pages/tools/TextSummarizer";
+import ImageGenerator from "./pages/tools/ImageGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/tool/1" element={<BlogGenerator />} />
           <Route path="/tool/2" element={<CodeGenerator />} />
           <Route path="/tool/3" element={<GrammarFixer />} />
+          <Route path="/tool/4" element={<ImageGenerator />} />
           <Route path="/tool/5" element={<AdCopyWriter />} />
           <Route path="/tool/6" element={<TextSummarizer />} />
           
