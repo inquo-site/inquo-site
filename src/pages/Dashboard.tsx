@@ -1,14 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Code2, Palette, TrendingUp, GraduationCap, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Sparkles, Code2, Palette, TrendingUp, GraduationCap, Zap, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { PremiumModal } from "@/components/PremiumModal";
+import { TopBar } from "@/components/TopBar";
+import { toast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface Tool {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  is_premium: boolean;
+  route_path: string;
+  badge: string;
+}
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<string>("");
+  const { profile } = useAuth();
 
   const categories = [
+    { id: "all", name: "All Tools", icon: Sparkles, color: "text-primary" },
     { id: "writing", name: "Writing & Content", icon: Sparkles, color: "text-blue-500" },
     { id: "coding", name: "Coding & Dev", icon: Code2, color: "text-green-500" },
     { id: "design", name: "Design & Creative", icon: Palette, color: "text-purple-500" },
@@ -17,88 +41,200 @@ const Dashboard = () => {
     { id: "productivity", name: "Productivity", icon: Zap, color: "text-yellow-500" },
   ];
 
-  const tools = [
-    { id: 1, name: "Blog Generator", category: "writing", description: "Generate engaging blog posts in seconds" },
-    { id: 2, name: "Code Generator", category: "coding", description: "Write code in multiple languages" },
-    { id: 3, name: "Grammar Fixer", category: "writing", description: "Fix grammar and improve writing" },
-    { id: 4, name: "Image Generator", category: "design", description: "Create stunning AI images with OpenAI" },
-    { id: 5, name: "Ad Copy Writer", category: "marketing", description: "Write compelling ad copy" },
-    { id: 6, name: "Text Summarizer", category: "productivity", description: "Summarize long documents" },
-  ];
+  useEffect(() => {
+    fetchTools();
+  }, []);
+
+  const fetchTools = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('tools')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load tools"
+      });
+    } else {
+      setTools(data || []);
+    }
+    setLoading(false);
+  };
+
+  const filteredTools = tools.filter(tool => {
+    const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || tool.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const canAccessTool = (tool: Tool) => {
+    if (!tool.is_premium) return true;
+    if (!profile) return false;
+    return ['pro', 'yearly', 'lifetime'].includes(profile.plan);
+  };
+
+  const handleToolClick = (tool: Tool, e: React.MouseEvent) => {
+    if (tool.is_premium && !canAccessTool(tool)) {
+      e.preventDefault();
+      setSelectedTool(tool.name);
+      setPremiumModalOpen(true);
+    }
+  };
+
+  const getCategoryCount = (categoryId: string) => {
+    if (categoryId === "all") return tools.length;
+    return tools.filter(t => t.category === categoryId).length;
+  };
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">AI Tools Dashboard</h1>
-          <p className="text-muted-foreground">Select a tool to get started</p>
-        </div>
-
-        {/* Search */}
-        <div className="mb-8">
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              placeholder="Search for tools..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12"
-            />
+    <>
+      <TopBar />
+      <div className="min-h-screen p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">AI Tools Dashboard</h1>
+            <p className="text-muted-foreground">
+              {profile?.plan === 'free' ? 
+                'Access 10 free tools or upgrade to unlock all 62+ premium tools' : 
+                `Enjoy unlimited access to all ${tools.length}+ AI tools`
+              }
+            </p>
           </div>
-        </div>
 
-        {/* Categories */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((category) => (
-              <Card
-                key={category.id}
-                className="glass-card p-4 cursor-pointer hover:scale-105 transition-transform"
-              >
-                <category.icon className={`w-8 h-8 mb-2 ${category.color}`} />
-                <h3 className="font-semibold text-sm">{category.name}</h3>
-              </Card>
-            ))}
+          {/* Upgrade Banner for Free Users */}
+          {profile?.plan === 'free' && (
+            <div className="mb-8 p-6 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-1">Unlock 62+ Premium Tools 🚀</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get unlimited access, more credits, and premium AI models
+                  </p>
+                </div>
+                <Button onClick={() => setPremiumModalOpen(true)} size="lg">
+                  Upgrade Now
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Search */}
+          <div className="mb-8">
+            <div className="relative max-w-2xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder="Search for tools..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Tools Grid */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Featured Tools</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tools.map((tool) => (
-              <Link key={tool.id} to={`/tool/${tool.id}`}>
-                <Card className="glass-card p-6 cursor-pointer hover:scale-105 transition-transform h-full">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-xl font-semibold">{tool.name}</h3>
-                    <Sparkles className="w-5 h-5 text-accent" />
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
-                  <Button variant="outline" className="w-full">
-                    Try Now
-                  </Button>
+          {/* Categories */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-semibold mb-4">Categories</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+              {categories.map((category) => (
+                <Card
+                  key={category.id}
+                  className={`glass-card p-4 cursor-pointer hover:scale-105 transition-transform ${
+                    selectedCategory === category.id ? 'border-primary border-2' : ''
+                  }`}
+                  onClick={() => setSelectedCategory(category.id)}
+                >
+                  <category.icon className={`w-8 h-8 mb-2 ${category.color}`} />
+                  <h3 className="font-semibold text-sm">{category.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{getCategoryCount(category.id)} tools</p>
                 </Card>
-              </Link>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Upgrade CTA */}
-        <div className="mt-12 glass-card p-8 text-center rounded-2xl">
-          <h2 className="text-2xl font-bold mb-2">Ready for More?</h2>
-          <p className="text-muted-foreground mb-6">
-            Upgrade to Pro for unlimited access to all 50+ tools
-          </p>
-          <Link to="/pricing">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              Upgrade to Pro
-            </Button>
-          </Link>
+          {/* Tools Grid */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">
+              {selectedCategory === "all" ? "All Tools" : 
+               categories.find(c => c.id === selectedCategory)?.name}
+            </h2>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredTools.map((tool) => {
+                  const isAccessible = canAccessTool(tool);
+                  const isPremium = tool.is_premium;
+                  
+                  return (
+                    <Link 
+                      key={tool.id} 
+                      to={isAccessible ? tool.route_path : '#'}
+                      onClick={(e) => handleToolClick(tool, e)}
+                    >
+                      <Card className={`glass-card p-6 cursor-pointer hover:scale-105 transition-transform h-full relative ${
+                        !isAccessible ? 'opacity-75' : ''
+                      }`}>
+                        {/* Premium Lock Badge */}
+                        {isPremium && !isAccessible && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="absolute top-3 right-3 bg-yellow-500/20 backdrop-blur-sm p-2 rounded-full">
+                                  <Lock className="w-4 h-4 text-yellow-600" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Premium Access Required</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-xl font-semibold pr-8">{tool.name}</h3>
+                          <Sparkles className="w-5 h-5 text-accent" />
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
+                        
+                        <div className="flex items-center justify-between">
+                          <Badge variant={tool.badge === 'free' ? 'outline' : 'default'}>
+                            {tool.badge === 'free' && '🆓 Free'}
+                            {tool.badge === 'premium' && '🔒 Premium'}
+                            {tool.badge === 'new' && '⚡ New'}
+                            {tool.badge === 'early_access' && '⚡ Early Access'}
+                          </Badge>
+                          
+                          <Button 
+                            variant={isAccessible ? "outline" : "secondary"} 
+                            size="sm"
+                          >
+                            {isAccessible ? 'Try Now' : 'Unlock'}
+                          </Button>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <PremiumModal 
+        open={premiumModalOpen} 
+        onClose={() => setPremiumModalOpen(false)}
+        toolName={selectedTool}
+      />
+    </>
   );
 };
 

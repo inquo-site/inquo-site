@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -22,32 +24,34 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<Privacy />} />
-          
-          {/* AI Tools */}
-          <Route path="/tool/1" element={<BlogGenerator />} />
-          <Route path="/tool/2" element={<CodeGenerator />} />
-          <Route path="/tool/3" element={<GrammarFixer />} />
-          <Route path="/tool/4" element={<ImageGenerator />} />
-          <Route path="/tool/5" element={<AdCopyWriter />} />
-          <Route path="/tool/6" element={<TextSummarizer />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/tool/blog" element={<ProtectedRoute><BlogGenerator /></ProtectedRoute>} />
+            <Route path="/tool/code" element={<ProtectedRoute><CodeGenerator /></ProtectedRoute>} />
+            <Route path="/tool/grammar" element={<ProtectedRoute><GrammarFixer /></ProtectedRoute>} />
+            <Route path="/tool/adcopy" element={<ProtectedRoute><AdCopyWriter /></ProtectedRoute>} />
+            <Route path="/tool/summarizer" element={<ProtectedRoute><TextSummarizer /></ProtectedRoute>} />
+            <Route path="/tool/image" element={<ProtectedRoute><ImageGenerator /></ProtectedRoute>} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
