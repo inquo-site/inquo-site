@@ -14,16 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      tools: {
+        Row: {
+          badge: string | null
+          category: string
+          created_at: string | null
+          credits_cost: number | null
+          description: string
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_premium: boolean | null
+          name: string
+          route_path: string | null
+          tool_type: string | null
+        }
+        Insert: {
+          badge?: string | null
+          category: string
+          created_at?: string | null
+          credits_cost?: number | null
+          description: string
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_premium?: boolean | null
+          name: string
+          route_path?: string | null
+          tool_type?: string | null
+        }
+        Update: {
+          badge?: string | null
+          category?: string
+          created_at?: string | null
+          credits_cost?: number | null
+          description?: string
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_premium?: boolean | null
+          name?: string
+          route_path?: string | null
+          tool_type?: string | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string | null
+          credits_reset_at: string | null
+          daily_credits: number
+          email: string | null
+          full_name: string | null
+          id: string
+          max_daily_credits: number
+          plan: Database["public"]["Enums"]["plan_type"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_reset_at?: string | null
+          daily_credits?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          max_daily_credits?: number
+          plan?: Database["public"]["Enums"]["plan_type"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_reset_at?: string | null
+          daily_credits?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          max_daily_credits?: number
+          plan?: Database["public"]["Enums"]["plan_type"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_access_tool: {
+        Args: { _tool_id: string; _user_id: string }
+        Returns: boolean
+      }
+      deduct_credits: {
+        Args: { _amount: number; _user_id: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      reset_user_credits: { Args: never; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "user" | "admin"
+      plan_type: "free" | "pro" | "yearly" | "lifetime"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +276,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["user", "admin"],
+      plan_type: ["free", "pro", "yearly", "lifetime"],
+    },
   },
 } as const
