@@ -4,12 +4,64 @@ import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, BarChart, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Shield, Users, Settings, BarChart, LogOut, DollarSign, Activity } from "lucide-react";
+import { useEffect, useState } from "react";
+import UserManagement from "./admin/UserManagement";
+import ToolManagement from "./admin/ToolManagement";
+import Analytics from "./admin/Analytics";
+
+interface DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  premiumUsers: number;
+  totalTools: number;
+  monthlyRevenue: number;
+}
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    premiumUsers: 0,
+    totalTools: 0,
+    monthlyRevenue: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const { data: users } = await supabase.from('user_profiles').select('plan');
+      const { data: tools } = await supabase.from('tools').select('id');
+
+      const totalUsers = users?.length || 0;
+      const premiumUsers = users?.filter(u => u.plan !== 'free').length || 0;
+      const proUsers = users?.filter(u => u.plan === 'pro').length || 0;
+      const yearlyUsers = users?.filter(u => u.plan === 'yearly').length || 0;
+      const lifetimeUsers = users?.filter(u => u.plan === 'lifetime').length || 0;
+      
+      const monthlyRevenue = (proUsers * 29) + (yearlyUsers * 199) + (lifetimeUsers * 399);
+
+      setStats({
+        totalUsers,
+        activeUsers: totalUsers,
+        premiumUsers,
+        totalTools: tools?.length || 0,
+        monthlyRevenue,
+      });
+    } catch (error: any) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -49,74 +101,97 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Users</p>
-                <h3 className="text-2xl font-bold mt-1">1,234</h3>
-              </div>
-              <Users className="w-8 h-8 text-primary" />
+            <div className="flex flex-col">
+              <p className="text-sm text-muted-foreground mb-2">Total Users</p>
+              <h3 className="text-3xl font-bold mb-1">{loading ? '...' : stats.totalUsers}</h3>
+              <Users className="w-8 h-8 text-primary mt-2" />
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Tools</p>
-                <h3 className="text-2xl font-bold mt-1">100+</h3>
-              </div>
-              <Settings className="w-8 h-8 text-primary" />
+            <div className="flex flex-col">
+              <p className="text-sm text-muted-foreground mb-2">Active Users</p>
+              <h3 className="text-3xl font-bold mb-1">{loading ? '...' : stats.activeUsers}</h3>
+              <Activity className="w-8 h-8 text-green-500 mt-2" />
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Premium Users</p>
-                <h3 className="text-2xl font-bold mt-1">456</h3>
-              </div>
-              <BarChart className="w-8 h-8 text-primary" />
+            <div className="flex flex-col">
+              <p className="text-sm text-muted-foreground mb-2">Premium Users</p>
+              <h3 className="text-3xl font-bold mb-1">{loading ? '...' : stats.premiumUsers}</h3>
+              <BarChart className="w-8 h-8 text-purple-500 mt-2" />
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-                <h3 className="text-2xl font-bold mt-1">$12,345</h3>
-              </div>
-              <BarChart className="w-8 h-8 text-primary" />
+            <div className="flex flex-col">
+              <p className="text-sm text-muted-foreground mb-2">Total Tools</p>
+              <h3 className="text-3xl font-bold mb-1">{loading ? '...' : stats.totalTools}</h3>
+              <Settings className="w-8 h-8 text-amber-500 mt-2" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex flex-col">
+              <p className="text-sm text-muted-foreground mb-2">Monthly Revenue</p>
+              <h3 className="text-3xl font-bold mb-1">${loading ? '...' : stats.monthlyRevenue.toLocaleString()}</h3>
+              <DollarSign className="w-8 h-8 text-green-500 mt-2" />
             </div>
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <Users className="w-10 h-10 text-primary mb-4" />
-            <h3 className="text-xl font-semibold mb-2">User Management</h3>
-            <p className="text-muted-foreground">
-              Manage users, roles, and permissions
-            </p>
-          </Card>
+        {/* Tabs for Management Sections */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="tools">Tool Management</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <Settings className="w-10 h-10 text-primary mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Tool Configuration</h3>
-            <p className="text-muted-foreground">
-              Configure and manage AI tools
-            </p>
-          </Card>
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => document.querySelector('[value="users"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}>
+                <Users className="w-10 h-10 text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">User Management</h3>
+                <p className="text-muted-foreground">
+                  Manage users, roles, and permissions
+                </p>
+              </Card>
 
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <BarChart className="w-10 h-10 text-primary mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Analytics</h3>
-            <p className="text-muted-foreground">
-              View usage statistics and insights
-            </p>
-          </Card>
-        </div>
+              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => document.querySelector('[value="tools"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}>
+                <Settings className="w-10 h-10 text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Tool Configuration</h3>
+                <p className="text-muted-foreground">
+                  Configure and manage AI tools
+                </p>
+              </Card>
+
+              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => document.querySelector('[value="analytics"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}>
+                <BarChart className="w-10 h-10 text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Analytics</h3>
+                <p className="text-muted-foreground">
+                  View usage statistics and insights
+                </p>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="tools">
+            <ToolManagement />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <Analytics />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
