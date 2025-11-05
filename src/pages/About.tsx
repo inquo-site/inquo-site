@@ -17,8 +17,8 @@ const About = () => {
         <div className="prose prose-lg dark:prose-invert mx-auto mb-16">
           <p className="text-lg">
             InQuo.site is a global AI Tools Hub designed to revolutionize the way you work. 
-            We bring together 160+ powerful AI tools in one seamless platform, making advanced
-            AI capabilities accessible to everyone.
+            We bring together 160 powerful AI tools (12 free + 148 premium) in one seamless platform, 
+            making advanced AI capabilities accessible to everyone.
           </p>
 
           <p className="text-lg">

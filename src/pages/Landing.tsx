@@ -7,19 +7,29 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
   const [toolsCount, setToolsCount] = useState<number>(160);
+  const [freeTools, setFreeTools] = useState<number>(12);
+  const [premiumTools, setPremiumTools] = useState<number>(148);
   const categories = [
-    { icon: Sparkles, name: "Writing & Content", count: "25 tools" },
-    { icon: Code2, name: "Coding & Dev", count: "25 tools" },
-    { icon: Palette, name: "Design & Creative", count: "25 tools" },
-    { icon: TrendingUp, name: "Marketing", count: "14 tools" },
-    { icon: GraduationCap, name: "Education", count: "11 tools" },
-    { icon: Zap, name: "Productivity", count: "11 tools" },
+    { icon: Sparkles, name: "Writing & Content", count: "35+ tools" },
+    { icon: Code2, name: "Coding & Dev", count: "30+ tools" },
+    { icon: Palette, name: "Design & Creative", count: "25+ tools" },
+    { icon: TrendingUp, name: "Marketing", count: "25+ tools" },
+    { icon: GraduationCap, name: "Education", count: "20+ tools" },
+    { icon: Zap, name: "Productivity", count: "25+ tools" },
   ];
 
   useEffect(() => {
     const getCount = async () => {
       const { count } = await supabase.from('tools').select('*', { count: 'exact', head: true });
       if (typeof count === 'number') setToolsCount(count);
+      
+      const { data: tools } = await supabase.from('tools').select('is_premium');
+      if (tools) {
+        const free = tools.filter(t => !t.is_premium).length;
+        const premium = tools.filter(t => t.is_premium).length;
+        setFreeTools(free);
+        setPremiumTools(premium);
+      }
     };
     getCount();
   }, []);
@@ -34,7 +44,7 @@ const Landing = () => {
           <div className="text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 glass-card text-sm font-medium">
               <Sparkles className="w-4 h-4 text-accent" />
-              <span>{toolsCount}+ AI-Powered Tools</span>
+              <span>{toolsCount}+ AI Tools ({freeTools} Free + {premiumTools} Premium)</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">

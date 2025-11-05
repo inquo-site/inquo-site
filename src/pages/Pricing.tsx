@@ -10,7 +10,7 @@ const Pricing = () => {
       price: "$0",
       period: "forever",
       features: [
-        "5 tools per day",
+        "12 Free AI Tools Access",
         "10 AI credits daily",
         "Basic AI models",
         "Community support",
@@ -24,7 +24,7 @@ const Pricing = () => {
       period: "/month",
       yearlyPrice: "$150",
       features: [
-        "Unlimited tool access",
+        "All 160 AI Tools (12 Free + 148 Premium)",
         "Unlimited AI credits",
         "GPT-4 & premium models",
         "Premium templates",
