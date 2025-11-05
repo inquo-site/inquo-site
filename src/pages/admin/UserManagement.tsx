@@ -11,6 +11,7 @@ import { Search, UserX, Crown, Edit2 } from "lucide-react";
 
 interface UserProfile {
   id: string;
+  user_id: string;
   email: string;
   full_name: string;
   plan: string;
@@ -139,7 +140,7 @@ const UserManagement = () => {
                     <TableCell>
                       <Select
                         value={user.plan}
-                        onValueChange={(value) => updateUserPlan(user.id, value as 'free' | 'pro' | 'yearly' | 'lifetime')}
+                        onValueChange={(value) => updateUserPlan(user.user_id, value as 'free' | 'pro' | 'yearly' | 'lifetime')}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />

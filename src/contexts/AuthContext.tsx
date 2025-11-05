@@ -89,9 +89,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, session, profile, loading, refreshProfile }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  // Presence tracking for realtime online users
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel('online-users', {
+      config: { presence: { key: user.id } },
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        // sync event; admins will compute counts
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') return;
+        await channel.track({ user_id: user.id, email: user.email, online_at: new Date().toISOString() });
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+

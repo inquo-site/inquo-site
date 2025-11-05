@@ -31,9 +31,23 @@ const AdminDashboard = () => {
     monthlyRevenue: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState(0);
 
   useEffect(() => {
     fetchDashboardStats();
+
+    // Subscribe to presence channel for realtime online users
+    const channel = supabase.channel('online-users');
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState() as Record<string, any[]>;
+        setOnlineUsers(Object.keys(state).length);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -112,8 +126,8 @@ const AdminDashboard = () => {
 
           <Card className="p-6">
             <div className="flex flex-col">
-              <p className="text-sm text-muted-foreground mb-2">Active Users</p>
-              <h3 className="text-3xl font-bold mb-1">{loading ? '...' : stats.activeUsers}</h3>
+              <p className="text-sm text-muted-foreground mb-2">Active Users (Realtime)</p>
+              <h3 className="text-3xl font-bold mb-1">{loading ? '...' : onlineUsers}</h3>
               <Activity className="w-8 h-8 text-green-500 mt-2" />
             </div>
           </Card>
@@ -136,7 +150,7 @@ const AdminDashboard = () => {
 
           <Card className="p-6">
             <div className="flex flex-col">
-              <p className="text-sm text-muted-foreground mb-2">Monthly Revenue</p>
+              <p className="text-sm text-muted-foreground mb-2">Estimated Revenue</p>
               <h3 className="text-3xl font-bold mb-1">${loading ? '...' : stats.monthlyRevenue.toLocaleString()}</h3>
               <DollarSign className="w-8 h-8 text-green-500 mt-2" />
             </div>

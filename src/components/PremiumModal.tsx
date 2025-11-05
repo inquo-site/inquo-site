@@ -19,7 +19,7 @@ export function PremiumModal({ open, onClose, toolName }: PremiumModalProps) {
       badge: "Pro User",
       icon: Zap,
       features: [
-        "Access All 100+ AI Tools 🔓",
+        "Access All 160+ AI Tools 🔓",
         "Early Access to new tools",
         "40 credits/day usage",
         "Premium AI Models (GPT-4, Gemini, Claude)",
@@ -37,7 +37,7 @@ export function PremiumModal({ open, onClose, toolName }: PremiumModalProps) {
       icon: Crown,
       savings: "Save $51",
       features: [
-        "Access All 100+ AI Tools 🔓",
+        "Access All 160+ AI Tools 🔓",
         "Early Access to new & beta tools",
         "50 credits/day usage",
         "Premium AI Models + API Access",

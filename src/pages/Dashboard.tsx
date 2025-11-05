@@ -19,6 +19,7 @@ interface Tool {
   category: string;
   is_premium: boolean;
   route_path: string;
+  tool_type: string;
   badge: string;
 }
 
@@ -100,7 +101,7 @@ const Dashboard = () => {
             <h1 className="text-4xl font-bold mb-2">AI Tools Dashboard</h1>
             <p className="text-muted-foreground">
               {profile?.plan === 'free' ? 
-                'Access 10 free tools or upgrade to unlock all 100+ premium tools' : 
+                `Access 10 free tools or upgrade to unlock all ${tools.length}+ premium tools` : 
                 `Enjoy unlimited access to all ${tools.length}+ AI tools`
               }
             </p>
@@ -111,7 +112,7 @@ const Dashboard = () => {
             <div className="mb-8 p-6 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl border border-primary/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold mb-1">Unlock 100+ Premium Tools 🚀</h3>
+                  <h3 className="text-xl font-bold mb-1">Unlock {tools.length}+ Premium Tools 🚀</h3>
                   <p className="text-sm text-muted-foreground">
                     Get unlimited access, more credits, and premium AI models
                   </p>
@@ -175,7 +176,7 @@ const Dashboard = () => {
                   return (
                     <Link 
                       key={tool.id} 
-                      to={isAccessible ? tool.route_path : '#'}
+                      to={isAccessible ? `/tool/${tool.tool_type}` : '#'}
                       onClick={(e) => handleToolClick(tool, e)}
                     >
                       <Card className={`glass-card p-6 cursor-pointer hover:scale-105 transition-transform h-full relative ${
