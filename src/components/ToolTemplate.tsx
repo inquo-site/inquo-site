@@ -135,9 +135,60 @@ const ToolTemplate = ({ title, description, placeholder, toolType }: ToolTemplat
                 </div>
               )}
             </div>
-            <div className="min-h-[300px] p-4 bg-background/50 rounded-lg border">
+            <div className="min-h-[300px] p-4 bg-background/50 rounded-lg border overflow-auto">
               {output ? (
-                <p className="whitespace-pre-wrap">{output}</p>
+                <div className="formatted-output space-y-4">
+                  {output.split('\n\n').map((paragraph, idx) => {
+                    // Check if paragraph contains question/input context
+                    if (paragraph.toLowerCase().includes('question:') || 
+                        paragraph.toLowerCase().includes('input:') ||
+                        paragraph.toLowerCase().includes('prompt:')) {
+                      return (
+                        <div key={idx} className="p-3 bg-secondary/30 rounded-lg border-l-4 border-secondary">
+                          <p className="text-foreground font-medium whitespace-pre-wrap">{paragraph}</p>
+                        </div>
+                      );
+                    }
+                    
+                    // Format the paragraph with highlighted text
+                    const formattedText = paragraph.split('\n').map((line, lineIdx) => {
+                      // Check for bold patterns like **text** or __text__
+                      let processedLine = line
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>')
+                        .replace(/__(.*?)__/g, '<strong class="font-bold text-primary">$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+                        .replace(/_(.*?)_/g, '<em class="italic">$1</em>');
+                      
+                      // Highlight numbered points (1. 2. 3. etc)
+                      if (/^\d+\./.test(line.trim())) {
+                        return (
+                          <div key={lineIdx} className="ml-4 mb-2">
+                            <span className="text-blue-600 dark:text-blue-400 font-semibold" dangerouslySetInnerHTML={{ __html: processedLine }} />
+                          </div>
+                        );
+                      }
+                      
+                      // Highlight bullet points
+                      if (/^[-•]/.test(line.trim())) {
+                        return (
+                          <div key={lineIdx} className="ml-4 mb-2">
+                            <span className="text-blue-600 dark:text-blue-400" dangerouslySetInnerHTML={{ __html: processedLine }} />
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <span key={lineIdx} className="text-blue-600 dark:text-blue-400 block mb-1" dangerouslySetInnerHTML={{ __html: processedLine }} />
+                      );
+                    });
+                    
+                    return (
+                      <div key={idx} className="paragraph-block">
+                        {formattedText}
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
                 <p className="text-muted-foreground italic">
                   Your generated content will appear here...

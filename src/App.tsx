@@ -21,6 +21,7 @@ import GrammarFixer from "./pages/tools/GrammarFixer";
 import AdCopyWriter from "./pages/tools/AdCopyWriter";
 import TextSummarizer from "./pages/tools/TextSummarizer";
 import ImageGenerator from "./pages/tools/ImageGenerator";
+import ChatAI from "./pages/tools/ChatAI";
 import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/tool/adcopy" element={<ProtectedRoute><AdCopyWriter /></ProtectedRoute>} />
             <Route path="/tool/summarizer" element={<ProtectedRoute><TextSummarizer /></ProtectedRoute>} />
             <Route path="/tool/image" element={<ProtectedRoute><ImageGenerator /></ProtectedRoute>} />
+            <Route path="/tool/chat" element={<ProtectedRoute><ChatAI /></ProtectedRoute>} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
