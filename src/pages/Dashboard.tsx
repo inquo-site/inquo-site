@@ -172,11 +172,12 @@ const Dashboard = () => {
                 {filteredTools.map((tool) => {
                   const isAccessible = canAccessTool(tool);
                   const isPremium = tool.is_premium;
+                  const path = tool.route_path && tool.route_path.trim() ? tool.route_path : `/tool/${tool.tool_type}`;
                   
                   return (
                     <Link 
                       key={tool.id} 
-                      to={isAccessible ? `/tool/${tool.tool_type}` : '#'}
+                      to={isAccessible ? path : '#'}
                       onClick={(e) => handleToolClick(tool, e)}
                     >
                       <Card className={`glass-card p-6 cursor-pointer hover:scale-105 transition-transform h-full relative ${

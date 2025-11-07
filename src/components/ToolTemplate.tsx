@@ -21,7 +21,21 @@ const ToolTemplate = ({ title, description, placeholder, toolType }: ToolTemplat
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleGenerate = async () => {
+const sanitizeOutput = (raw: string) => {
+  if (!raw) return raw;
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
+    const lines = trimmed.split("\n");
+    // drop opening fence (and optional language)
+    lines.shift();
+    // drop closing fence if present
+    if (lines[lines.length - 1]?.trim() === "```") lines.pop();
+    return lines.join("\n").trim();
+  }
+  return raw;
+};
+
+const handleGenerate = async () => {
     if (!input.trim()) {
       toast({
         title: "Input required",
@@ -39,7 +53,7 @@ const ToolTemplate = ({ title, description, placeholder, toolType }: ToolTemplat
 
       if (error) throw error;
 
-      setOutput(data.result);
+      setOutput(sanitizeOutput(data.result));
       toast({
         title: "Success!",
         description: "Content generated successfully",
