@@ -29,7 +29,7 @@ const DynamicTool = () => {
         const { data, error } = await supabase
           .from('tools')
           .select('id, name, description, tool_type')
-          .or(`tool_type.eq.${toolType},route_path.eq./tool/${toolType}`)
+          .or(`tool_type.eq.${toolType},route_path.eq./tool/${toolType},route_path.eq./tools/${toolType}`)
           .maybeSingle();
 
         if (error) throw error;

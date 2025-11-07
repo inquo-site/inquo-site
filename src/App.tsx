@@ -43,6 +43,7 @@ const App = () => (
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/tool/image" element={<ProtectedRoute><ImageGenerator /></ProtectedRoute>} />
+            <Route path="/tools/:toolType" element={<ProtectedRoute><DynamicTool /></ProtectedRoute>} />
             <Route path="/tool/:toolType" element={<ProtectedRoute><DynamicTool /></ProtectedRoute>} />
             
             {/* Admin Routes */}
