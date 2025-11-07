@@ -9,8 +9,9 @@ interface Tool {
   id: string;
   name: string;
   description: string;
-  tool_type: string;
+  tool_type: string | null;
 }
+
 
 const DynamicTool = () => {
   const { toolType } = useParams<{ toolType: string }>();
@@ -34,7 +35,21 @@ const DynamicTool = () => {
 
         if (error) throw error;
 
-        setTool(data);
+        let found = data;
+
+        // Fallback: try matching by name derived from slug if nothing found
+        if (!found && toolType) {
+          const nameGuess = decodeURIComponent(toolType).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+          const { data: byName } = await supabase
+            .from('tools')
+            .select('id, name, description, tool_type')
+            .ilike('name', nameGuess)
+            .maybeSingle();
+          if (byName) found = byName;
+        }
+
+        setTool(found);
+
       } catch (error: any) {
         console.error('Error fetching tool:', error);
         toast({
@@ -67,7 +82,7 @@ const DynamicTool = () => {
       title={tool.name}
       description={tool.description}
       placeholder={`Enter your ${tool.name.toLowerCase()} prompt here...`}
-      toolType={tool.tool_type}
+      toolType={tool.tool_type || (toolType as string)}
     />
   );
 };

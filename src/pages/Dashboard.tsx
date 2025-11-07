@@ -17,11 +17,12 @@ interface Tool {
   name: string;
   description: string;
   category: string;
-  is_premium: boolean;
-  route_path: string;
-  tool_type: string;
-  badge: string;
+  is_premium?: boolean | null;
+  route_path?: string | null;
+  tool_type?: string | null;
+  badge?: string | null;
 }
+
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
