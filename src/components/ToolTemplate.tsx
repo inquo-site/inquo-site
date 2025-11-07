@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Copy, Download, RefreshCw, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ToolTemplateProps {
   title: string;
@@ -137,57 +139,32 @@ const ToolTemplate = ({ title, description, placeholder, toolType }: ToolTemplat
             </div>
             <div className="min-h-[300px] p-4 bg-background/50 rounded-lg border overflow-auto">
               {output ? (
-                <div className="formatted-output space-y-4">
-                  {output.split('\n\n').map((paragraph, idx) => {
-                    // Check if paragraph contains question/input context
-                    if (paragraph.toLowerCase().includes('question:') || 
-                        paragraph.toLowerCase().includes('input:') ||
-                        paragraph.toLowerCase().includes('prompt:')) {
-                      return (
-                        <div key={idx} className="p-3 bg-secondary/30 rounded-lg border-l-4 border-secondary">
-                          <p className="text-foreground font-medium whitespace-pre-wrap">{paragraph}</p>
-                        </div>
-                      );
-                    }
-                    
-                    // Format the paragraph with highlighted text
-                    const formattedText = paragraph.split('\n').map((line, lineIdx) => {
-                      // Check for bold patterns like **text** or __text__
-                      let processedLine = line
-                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-primary">$1</strong>')
-                        .replace(/__(.*?)__/g, '<strong class="font-bold text-primary">$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-                        .replace(/_(.*?)_/g, '<em class="italic">$1</em>');
-                      
-                      // Highlight numbered points (1. 2. 3. etc)
-                      if (/^\d+\./.test(line.trim())) {
-                        return (
-                          <div key={lineIdx} className="ml-4 mb-2">
-                            <span className="text-blue-600 dark:text-blue-400 font-semibold" dangerouslySetInnerHTML={{ __html: processedLine }} />
-                          </div>
-                        );
-                      }
-                      
-                      // Highlight bullet points
-                      if (/^[-•]/.test(line.trim())) {
-                        return (
-                          <div key={lineIdx} className="ml-4 mb-2">
-                            <span className="text-blue-600 dark:text-blue-400" dangerouslySetInnerHTML={{ __html: processedLine }} />
-                          </div>
-                        );
-                      }
-                      
-                      return (
-                        <span key={lineIdx} className="text-blue-600 dark:text-blue-400 block mb-1" dangerouslySetInnerHTML={{ __html: processedLine }} />
-                      );
-                    });
-                    
-                    return (
-                      <div key={idx} className="paragraph-block">
-                        {formattedText}
-                      </div>
-                    );
-                  })}
+                <div className="prose prose-lg dark:prose-invert max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-4 text-foreground" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 text-foreground" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-lg font-bold mb-2 text-foreground" {...props} />,
+                      p: ({node, ...props}) => <p className="mb-4 text-foreground leading-relaxed" {...props} />,
+                      strong: ({node, ...props}) => <strong className="font-bold text-primary" {...props} />,
+                      em: ({node, ...props}) => <em className="italic text-foreground" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-4 space-y-2 text-foreground" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-4 space-y-2 text-foreground" {...props} />,
+                      li: ({node, ...props}) => <li className="text-foreground" {...props} />,
+                      code: ({node, inline, ...props}: any) => 
+                        inline ? (
+                          <code className="bg-secondary px-1.5 py-0.5 rounded text-sm font-mono text-primary" {...props} />
+                        ) : (
+                          <code className="block bg-secondary p-4 rounded-lg text-sm font-mono overflow-x-auto mb-4" {...props} />
+                        ),
+                      pre: ({node, ...props}) => <pre className="bg-secondary p-4 rounded-lg overflow-x-auto mb-4" {...props} />,
+                      blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground" {...props} />,
+                      a: ({node, ...props}) => <a className="text-primary hover:underline" {...props} />,
+                    }}
+                  >
+                    {output}
+                  </ReactMarkdown>
                 </div>
               ) : (
                 <p className="text-muted-foreground italic">
