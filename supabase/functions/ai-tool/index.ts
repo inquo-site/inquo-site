@@ -16,12 +16,15 @@ const TOOL_PROMPTS: Record<string, string> = {
   summarize: "You are an expert at summarizing content. Create a concise summary that captures the key points and main ideas of the text. Make it clear, structured, and easy to understand.",
   image: "You are an expert at creating detailed image descriptions. Based on the user's prompt, create a vivid, detailed description for an AI image generator.",
   chat: "You are a helpful, knowledgeable AI assistant. Provide clear, accurate, and well-structured answers. Use proper formatting with line breaks between paragraphs. Highlight important points and make your responses easy to read and understand.",
+  notes: "You are an expert note organizer. Transform the user's thoughts, ideas, or raw information into well-organized, structured notes. Use clear headings, bullet points, and logical groupings to make the content easy to review and reference.",
   essay: "You are an expert academic writer. Create a well-structured essay with a clear thesis statement, supporting arguments, evidence, and a strong conclusion. Use formal academic language and proper paragraph structure. Include an introduction, body paragraphs, and conclusion.",
   email: "You are a professional email writer. Create clear, concise, and professional emails tailored to the specified purpose and audience. Include appropriate greeting, body, and sign-off. Maintain the right tone based on the context (formal, semi-formal, or friendly).",
   social: "You are a social media expert. Create engaging, platform-optimized content that drives engagement. Include relevant emojis, compelling hooks, and clear calls-to-action. Tailor the content style and length to the specified platform (Instagram, Twitter, LinkedIn, Facebook, TikTok).",
   product: "You are an expert product copywriter. Create compelling product descriptions that highlight key features, benefits, and unique selling points. Use persuasive language that appeals to the target audience and encourages purchases. Include specifications when relevant.",
   story: "You are a creative writer. Create engaging, imaginative short stories with vivid descriptions, compelling characters, and interesting plots. Use creative language and narrative techniques to captivate readers. Include dialogue, conflict, and resolution.",
   hashtags: "You are a social media strategist specializing in hashtag optimization. Generate a mix of popular, niche, and branded hashtags that maximize reach and engagement. Provide hashtags organized by category (trending, niche-specific, branded) with brief explanations of their relevance.",
+  paraphrase: "You are an expert at paraphrasing text. Rewrite the provided content in a different way while preserving the original meaning. Vary sentence structure, use synonyms, and improve clarity while maintaining the core message.",
+  copywriting: "You are an expert copywriter. Create persuasive, engaging copy that drives action. Focus on the target audience's pain points, desires, and motivations. Use proven copywriting techniques like AIDA (Attention, Interest, Desire, Action).",
   
   // Premium tools
   resume: "You are an expert resume writer and career coach. Create a professional, ATS-friendly resume that highlights the candidate's skills, experience, and achievements. Use action verbs, quantify accomplishments where possible, and format the content clearly with sections for Summary, Experience, Skills, and Education. Tailor the resume to the specified industry or job role.",
@@ -30,6 +33,12 @@ const TOOL_PROMPTS: Record<string, string> = {
   businessplan: "You are a business strategy consultant. Create a comprehensive business plan that includes an executive summary, company description, market analysis, organization structure, product/service details, marketing strategy, funding requirements, and financial projections. Use professional business language and include actionable recommendations.",
   legal: "You are a legal document specialist. Draft clear, professional legal documents based on the user's requirements. Use proper legal terminology and structure. Include all necessary clauses, definitions, and provisions. Note: Always recommend review by a qualified attorney before use. This is for informational purposes only and does not constitute legal advice.",
   videoscript: "You are a video content creator and scriptwriter. Write engaging video scripts with attention-grabbing hooks, clear structure, and compelling calls-to-action. Include visual cues, timing suggestions, and B-roll recommendations. Optimize for audience retention with pattern interrupts and storytelling techniques. Adapt the tone and style to the specified platform (YouTube, TikTok, Instagram Reels).",
+  debug: "You are an expert debugger. Analyze the provided code for bugs, errors, and issues. Identify the problems, explain what's wrong, and provide corrected code with explanations of the fixes.",
+  optimize: "You are a code optimization expert. Analyze the provided code and suggest optimizations for better performance, readability, and maintainability. Provide the optimized version with explanations.",
+  landing: "You are a landing page copywriter. Create compelling landing page copy with attention-grabbing headlines, persuasive body copy, clear value propositions, and strong calls-to-action.",
+  color: "You are a color palette expert. Generate beautiful, harmonious color palettes based on the user's requirements. Provide hex codes, RGB values, and usage suggestions.",
+  logo: "You are a logo design consultant. Create detailed logo design descriptions and concepts based on the user's brand requirements and preferences.",
+  strategy: "You are a marketing strategy expert. Develop comprehensive marketing strategies with clear goals, target audience analysis, channel recommendations, and actionable tactics.",
 };
 
 serve(async (req) => {
@@ -42,26 +51,48 @@ serve(async (req) => {
     // Authenticate user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.log('No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'Missing authorization' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Extract the token from the header
+    const token = authHeader.replace('Bearer ', '');
     
-    if (authError || !user) {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+    // Use service role key to create admin client for RPC calls
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Create user client with the user's token for authentication
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+
+    // Get the user from the token
+    const { data: { user }, error: authError } = await userClient.auth.getUser(token);
+    
+    if (authError) {
+      console.log('Auth error:', authError.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (!user) {
+      console.log('No user found from token');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`User authenticated: ${user.id}`);
 
     const { prompt, toolType } = await req.json();
 
@@ -72,20 +103,31 @@ serve(async (req) => {
       );
     }
 
-    // Get tool info and validate access
-    const { data: tool, error: toolError } = await supabaseClient
+    // Get tool info using admin client
+    const { data: tool, error: toolError } = await adminClient
       .from('tools')
       .select('id, is_premium, credits_cost')
       .eq('tool_type', toolType)
+      .limit(1)
       .maybeSingle();
+
+    if (toolError) {
+      console.log('Tool fetch error:', toolError.message);
+    }
 
     // Default credits cost if tool not found in DB
     const creditsCost = tool?.credits_cost || 2;
 
+    console.log(`Tool: ${toolType}, Premium: ${tool?.is_premium}, Credits: ${creditsCost}`);
+
     // Check premium access if tool is premium
     if (tool?.is_premium) {
-      const { data: hasAccess, error: accessError } = await supabaseClient
+      const { data: hasAccess, error: accessError } = await adminClient
         .rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
+
+      if (accessError) {
+        console.log('Access check error:', accessError.message);
+      }
 
       if (accessError || !hasAccess) {
         return new Response(
@@ -95,9 +137,13 @@ serve(async (req) => {
       }
     }
 
-    // Deduct credits
-    const { data: creditsDeducted, error: creditsError } = await supabaseClient
+    // Deduct credits using admin client
+    const { data: creditsDeducted, error: creditsError } = await adminClient
       .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
+
+    if (creditsError) {
+      console.log('Credits deduction error:', creditsError.message);
+    }
 
     if (creditsError || !creditsDeducted) {
       return new Response(
@@ -106,23 +152,28 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    console.log(`Credits deducted: ${creditsCost} for user ${user.id}`);
 
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    const systemPrompt = TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
+    
+    // Use Lovable AI Gateway
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
+      throw new Error('AI service is not configured');
     }
 
     console.log(`Processing ${toolType} request for user ${user.id}...`);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -133,7 +184,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('AI API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -144,12 +195,12 @@ serve(async (req) => {
       
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'API credits exhausted. Please check your OpenAI account.' }),
+          JSON.stringify({ error: 'AI credits exhausted. Please try again later.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`AI API error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -159,7 +210,7 @@ serve(async (req) => {
       throw new Error('No content in AI response');
     }
 
-    console.log(`Successfully processed ${toolType} request`);
+    console.log(`Successfully processed ${toolType} request for user ${user.id}`);
 
     return new Response(
       JSON.stringify({ result }),
