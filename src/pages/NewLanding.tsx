@@ -6,10 +6,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { EmailPopup } from "@/components/EmailPopup";
 import { 
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
-  CheckCircle, Clock, Globe, Award, Heart, Target
+  CheckCircle, Clock, Globe, Award, Heart, Target,
+  Building2, Briefcase, UserCheck, BadgeCheck, Play
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,10 +20,21 @@ export default function NewLanding() {
   const [toolsCount, setToolsCount] = useState(0);
   const [freeTools, setFreeTools] = useState(0);
   const [trendingTools, setTrendingTools] = useState<any[]>([]);
+  const [showEmailPopup, setShowEmailPopup] = useState(false);
 
   useEffect(() => {
     fetchStats();
     fetchTrendingTools();
+    
+    // Show email popup after 5 seconds
+    const timer = setTimeout(() => {
+      const hasSeenPopup = localStorage.getItem('inquo_email_popup_seen');
+      if (!hasSeenPopup) {
+        setShowEmailPopup(true);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchStats = async () => {
@@ -32,7 +45,7 @@ export default function NewLanding() {
     const { count: free } = await supabase
       .from('tools')
       .select('*', { count: 'exact', head: true })
-      .eq('is_premium', false);
+      .eq('is_free_tool', true);
 
     setToolsCount(total || 0);
     setFreeTools(free || 0);
@@ -41,7 +54,7 @@ export default function NewLanding() {
   const fetchTrendingTools = async () => {
     const { data } = await supabase
       .from('tools')
-      .select('id, name, description, category, badge, route_path, tool_type')
+      .select('id, name, description, category, badge, route_path, tool_type, is_free_tool')
       .limit(6);
     
     setTrendingTools(data || []);
@@ -84,70 +97,54 @@ export default function NewLanding() {
 
   const stats = [
     { icon: Rocket, label: "AI Tools", value: `${toolsCount}+`, color: "text-accent" },
-    { icon: Users, label: "Active Users", value: "50K+", color: "text-blue-500" },
-    { icon: Star, label: "5-Star Reviews", value: "10K+", color: "text-yellow-500" },
-    { icon: Globe, label: "Countries", value: "120+", color: "text-green-500" },
+    { icon: Users, label: "Active Businesses", value: "10K+", color: "text-blue-500" },
+    { icon: Star, label: "5-Star Reviews", value: "5K+", color: "text-yellow-500" },
+    { icon: Globe, label: "Countries", value: "50+", color: "text-green-500" },
   ];
 
-  const benefits = [
+  const whyBusinessesChoose = [
     {
-      icon: Zap,
-      title: "Instant Results",
-      description: "Get high-quality AI outputs in seconds, not minutes. Our optimized models deliver faster than competitors.",
-      color: "from-yellow-500 to-orange-500"
+      icon: Building2,
+      title: "Built for Teams",
+      description: "Multi-user access, shared workspaces, and team collaboration features designed for business workflows.",
     },
     {
       icon: Shield,
       title: "Enterprise Security",
-      description: "Bank-level encryption protects your data. We never store or share your content with third parties.",
-      color: "from-blue-500 to-cyan-500"
+      description: "Bank-level encryption, GDPR compliant, and we never store or share your proprietary content.",
     },
     {
-      icon: Target,
-      title: "Precision Accuracy",
-      description: "Our fine-tuned AI models deliver 98% accuracy. Get professional-grade results every time.",
-      color: "from-green-500 to-emerald-500"
+      icon: Zap,
+      title: "10x Faster Output",
+      description: "Automate repetitive tasks. Generate content, code, and designs in seconds, not hours.",
     },
     {
-      icon: Heart,
-      title: "Free Forever Plan",
-      description: "Access 12+ essential AI tools completely free. No credit card required, no hidden fees.",
-      color: "from-pink-500 to-rose-500"
-    },
-    {
-      icon: Clock,
-      title: "24/7 Availability",
-      description: "Our AI never sleeps. Generate content, code, or images anytime, anywhere in the world.",
-      color: "from-purple-500 to-violet-500"
-    },
-    {
-      icon: Award,
-      title: "Premium Quality",
-      description: "Powered by GPT-4, Claude, and custom models. Get the best AI has to offer in one platform.",
-      color: "from-accent to-red-400"
+      icon: BadgeCheck,
+      title: "No Hidden Charges",
+      description: "Transparent pricing. What you see is what you pay. No surprise fees, ever.",
     },
   ];
 
   const testimonials = [
     {
-      name: "Sarah Chen",
-      role: "Content Manager at TechCorp",
-      avatar: "SC",
-      content: "Inquo.site cut my content creation time by 80%. The blog generator alone is worth the subscription!",
+      name: "Rahul Sharma",
+      role: "CEO, TechStartup India",
+      avatar: "RS",
+      content: "InQuo.site transformed our content workflow. We produce 5x more content with half the team. The ROI is incredible.",
       rating: 5
     },
     {
-      name: "Marcus Johnson",
+      name: "Priya Patel",
+      role: "Marketing Head, E-commerce Co.",
+      avatar: "PP", 
+      content: "The AI tools for ad copy and social media posts have cut our campaign creation time from days to hours.",
+      rating: 5
+    },
+    {
+      name: "Amit Verma",
       role: "Freelance Developer",
-      avatar: "MJ", 
-      content: "The code generator is incredibly accurate. It understands context better than any tool I've used.",
-      rating: 5
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Marketing Director",
-      avatar: "ER",
-      content: "We use 10+ tools daily for our campaigns. The ROI has been incredible - 5x our investment.",
+      avatar: "AV",
+      content: "Code Generator and Bug Fixer are game changers. I complete projects 3x faster now. Worth every rupee!",
       rating: 5
     },
   ];
@@ -159,11 +156,16 @@ export default function NewLanding() {
     }
   };
 
+  const handleClosePopup = () => {
+    setShowEmailPopup(false);
+    localStorage.setItem('inquo_email_popup_seen', 'true');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Section - Redesigned */}
+      {/* Hero Section - B2B Focused */}
       <section className="relative pt-28 pb-24 px-4 overflow-hidden">
         {/* Animated Gradient Background */}
         <div className="absolute inset-0">
@@ -174,75 +176,66 @@ export default function NewLanding() {
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center">
-            {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full mb-8 animate-fade-in">
-              <div className="flex -space-x-2">
-                {['SC', 'MJ', 'ER', 'AK'].map((initials, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-primary-foreground border-2 border-background">
-                    {initials}
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                Trusted by <span className="font-semibold text-foreground">50,000+</span> creators worldwide
+            {/* No Hidden Charges Badge */}
+            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full mb-6 animate-fade-in border-2 border-green-500/30">
+              <BadgeCheck className="w-5 h-5 text-green-500" />
+              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                ✓ No Hidden Charges • 7-Day Free Trial • Cancel Anytime
               </span>
             </div>
             
-            {/* Main Headline */}
+            {/* Main Headline - B2B */}
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight animate-fade-in">
-              Stop Switching Between
+              All-in-One AI Automation
               <br />
               <span className="relative">
                 <span className="bg-gradient-to-r from-accent via-orange-500 to-yellow-500 bg-clip-text text-transparent">
-                  AI Tools Forever
+                  Platform for Businesses
                 </span>
-                <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-                  <path d="M2 10C50 4 100 4 150 6C200 8 250 4 298 10" stroke="hsl(var(--accent))" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
               </span>
             </h1>
             
             {/* Sub-headline */}
             <p className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '100ms' }}>
-              160+ powerful AI tools for writing, images, code & marketing — 
-              <span className="text-foreground font-medium"> all in one platform</span>. 
-              Save 10+ hours every week.
+              160+ AI tools for content, code, design & marketing. 
+              <span className="text-foreground font-medium"> Trusted by 10,000+ agencies, freelancers & startups</span>. 
+              Save 20+ hours every week.
             </p>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <div className="relative group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
-                <Input
-                  type="text"
-                  placeholder="Search any AI tool... (e.g., 'blog writer', 'image generator')"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-14 pr-32 h-16 text-lg rounded-2xl border-2 border-border focus:border-accent shadow-lg bg-card"
-                />
-                <Button 
-                  type="submit" 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-12 px-6 rounded-xl"
-                >
-                  Search
-                </Button>
-              </div>
-            </form>
-
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in" style={{ animationDelay: '300ms' }}>
-              <Button asChild size="lg" className="text-lg px-10 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all group">
+            {/* CTAs - B2B focused */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
+              <Button asChild size="lg" className="text-lg px-10 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all group bg-accent hover:bg-accent/90">
                 <Link to="/dashboard">
-                  Start Creating Free
+                  Start Free Trial
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="text-lg px-10 h-14 rounded-xl border-2">
                 <Link to="/pricing">
-                  View Pricing
-                  <span className="ml-2 text-sm bg-accent/10 text-accent px-2 py-0.5 rounded-full">Save 40%</span>
+                  Buy Business Plan
+                  <Building2 className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
+            </div>
+
+            {/* Demo Video Placeholder */}
+            <div className="max-w-4xl mx-auto mb-12 animate-fade-in" style={{ animationDelay: '300ms' }}>
+              <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-border bg-card shadow-2xl group cursor-pointer">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 text-accent-foreground ml-1" />
+                  </div>
+                </div>
+                <img 
+                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=675&fit=crop" 
+                  alt="InQuo Platform Demo" 
+                  className="w-full h-full object-cover opacity-50"
+                />
+                <div className="absolute bottom-4 left-4 right-4 text-left">
+                  <p className="text-sm text-muted-foreground">Watch Demo</p>
+                  <p className="text-lg font-semibold">See how businesses automate with InQuo</p>
+                </div>
+              </div>
             </div>
 
             {/* Stats */}
@@ -268,14 +261,45 @@ export default function NewLanding() {
         <div className="flex animate-scroll whitespace-nowrap">
           {[...Array(2)].map((_, i) => (
             <div key={i} className="flex items-center gap-12 px-6">
-              <span className="text-muted-foreground font-medium">Featured on:</span>
-              <span className="font-bold text-lg">Product Hunt</span>
-              <span className="font-bold text-lg">TechCrunch</span>
-              <span className="font-bold text-lg">TheNextWeb</span>
-              <span className="font-bold text-lg">Hacker News</span>
-              <span className="font-bold text-lg">AI Weekly</span>
+              <span className="text-muted-foreground font-medium">Trusted by:</span>
+              <span className="font-bold text-lg">Agencies</span>
+              <span className="font-bold text-lg">Startups</span>
+              <span className="font-bold text-lg">Freelancers</span>
+              <span className="font-bold text-lg">E-commerce</span>
+              <span className="font-bold text-lg">SaaS Companies</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Why Businesses Choose InQuo */}
+      <section className="py-24 px-4 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 px-4 py-1">For Businesses</Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+              Why Businesses Choose <span className="text-gradient">InQuo.Site</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Designed specifically for teams and businesses who need reliable AI automation at scale
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {whyBusinessesChoose.map((item, index) => (
+              <Card 
+                key={index} 
+                className="p-6 hover:shadow-xl transition-all duration-300 border-2 hover:border-accent/30 group animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                  <item.icon className="w-7 h-7 text-accent" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                <p className="text-muted-foreground text-sm">{item.description}</p>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -335,12 +359,12 @@ export default function NewLanding() {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
               <div>
-                <Badge className="mb-4 px-4 py-1" variant="secondary">🔥 Hot Right Now</Badge>
+                <Badge className="mb-4 px-4 py-1" variant="secondary">🔥 Popular Tools</Badge>
                 <h2 className="text-3xl sm:text-4xl font-bold mb-2">
-                  Trending AI Tools
+                  Try These Free Tools
                 </h2>
                 <p className="text-lg text-muted-foreground">
-                  The most popular tools used by our community this week
+                  No login required for free tools — start using instantly
                 </p>
               </div>
               <Button asChild variant="outline" size="lg">
@@ -363,11 +387,9 @@ export default function NewLanding() {
                         <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
                           <Sparkles className="w-6 h-6 text-accent" />
                         </div>
-                        {tool.badge && (
-                          <Badge variant={tool.badge === 'free' ? 'outline' : 'default'} className="font-medium">
-                            {tool.badge === 'free' ? '🆓 Free' : '⭐ Premium'}
-                          </Badge>
-                        )}
+                        <Badge variant={tool.is_free_tool ? 'outline' : 'default'} className="font-medium">
+                          {tool.is_free_tool ? '🆓 Free' : '⭐ Pro'}
+                        </Badge>
                       </div>
                       <h3 className="text-lg font-bold mb-2 group-hover:text-accent transition-colors">{tool.name}</h3>
                       <p className="text-sm text-muted-foreground mb-5 line-clamp-2">
@@ -385,72 +407,36 @@ export default function NewLanding() {
         </section>
       )}
 
-      {/* Benefits Section - Redesigned */}
+      {/* Testimonials */}
       <section className="py-24 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <Badge className="mb-4 px-4 py-1">Why Inquo.Site</Badge>
+            <Badge className="mb-4 px-4 py-1">Case Studies</Badge>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              Built for <span className="text-gradient">Serious Creators</span>
+              Trusted by <span className="text-gradient">Growing Businesses</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              We've obsessed over every detail so you can focus on what matters — creating amazing work
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <Card 
-                key={index} 
-                className="p-8 hover:shadow-xl transition-all duration-300 border-2 hover:border-accent/30 group animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <benefit.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{benefit.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {benefit.description}
-                </p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-24 px-4 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 px-4 py-1">Testimonials</Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              Loved by <span className="text-gradient">10,000+ Creators</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              See what our users are saying about Inquo.Site
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <Card 
                 key={index} 
-                className="p-8 hover:shadow-xl transition-all duration-300 animate-fade-in"
+                className="p-8 hover:shadow-xl transition-all duration-300 border-2 hover:border-accent/30 animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex gap-1 mb-4">
+                <div className="flex items-center gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                   ))}
                 </div>
-                <p className="text-foreground mb-6 leading-relaxed">"{testimonial.content}"</p>
+                <p className="text-foreground mb-6 italic">"{testimonial.content}"</p>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold text-primary-foreground">
                     {testimonial.avatar}
                   </div>
                   <div>
-                    <div className="font-semibold">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                    <p className="font-semibold">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                   </div>
                 </div>
               </Card>
@@ -459,46 +445,65 @@ export default function NewLanding() {
         </div>
       </section>
 
-      {/* CTA Section - Redesigned */}
+      {/* Referral Section */}
+      <section className="py-24 px-4 bg-gradient-to-br from-accent/10 via-background to-primary/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <Badge className="mb-4 px-4 py-1 bg-accent/20 text-accent border-accent/30">Referral Program</Badge>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+            Invite & Earn <span className="text-accent">20% Commission</span>
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Share InQuo.Site with your network and earn 20% lifetime commission on every referral. 
+            No limits, no caps — grow your passive income!
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button asChild size="lg" className="bg-accent hover:bg-accent/90">
+              <Link to="/auth">
+                Join Referral Program
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/pricing">
+                Learn More
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
       <section className="py-24 px-4">
-        <div className="max-w-5xl mx-auto">
-          <Card className="p-12 sm:p-16 bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground relative overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/30 rounded-full blur-3xl" />
-            
-            <div className="relative z-10 text-center">
-              <Badge className="mb-6 bg-white/20 text-white hover:bg-white/30 px-4 py-1">
-                Limited Time Offer
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-                Start Creating with AI Today
-              </h2>
-              <p className="text-xl mb-4 opacity-90 max-w-2xl mx-auto">
-                Join 50,000+ creators using Inquo.Site to save time and produce better work.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 text-sm mb-10 opacity-80">
-                <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" /> No credit card required</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" /> 12+ free tools</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" /> Cancel anytime</span>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button asChild size="lg" variant="secondary" className="text-lg px-10 h-14 font-semibold">
-                  <Link to="/auth">
-                    Get Started Free
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="text-lg px-10 h-14 bg-white/10 hover:bg-white/20 text-white border-white/30">
-                  <Link to="/pricing">View All Plans</Link>
-                </Button>
-              </div>
+        <div className="max-w-4xl mx-auto text-center">
+          <Card className="p-12 bg-gradient-to-br from-primary to-accent text-primary-foreground">
+            <h3 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Automate Your Business?</h3>
+            <p className="text-lg mb-8 opacity-90">
+              Join 10,000+ businesses already saving 20+ hours every week with InQuo.Site
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button asChild size="lg" variant="secondary" className="text-lg px-10 h-14">
+                <Link to="/dashboard">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="text-lg px-10 h-14 bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
+                <Link to="/pricing">
+                  View Business Plans
+                </Link>
+              </Button>
             </div>
+            <p className="mt-6 text-sm opacity-75">
+              ✓ 7-day free trial • ✓ No credit card required • ✓ Cancel anytime
+            </p>
           </Card>
         </div>
       </section>
 
       <Footer />
+      
+      {/* Email Popup */}
+      <EmailPopup isOpen={showEmailPopup} onClose={handleClosePopup} />
     </div>
   );
 }

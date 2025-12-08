@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/AdminProtectedRoute";
 import Landing from "./pages/NewLanding";
 import AdminLogin from "./pages/AdminLogin";
@@ -40,11 +39,11 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/tool/image" element={<ProtectedRoute><ImageGenerator /></ProtectedRoute>} />
-            <Route path="/tools/:toolType" element={<ProtectedRoute><DynamicTool /></ProtectedRoute>} />
-            <Route path="/tool/:toolType" element={<ProtectedRoute><DynamicTool /></ProtectedRoute>} />
+            {/* Tools - No auth required, handled inside components */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/tool/image" element={<ImageGenerator />} />
+            <Route path="/tools/:toolType" element={<DynamicTool />} />
+            <Route path="/tool/:toolType" element={<DynamicTool />} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
