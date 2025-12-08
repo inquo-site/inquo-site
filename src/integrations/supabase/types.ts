@@ -98,6 +98,7 @@ export type Database = {
           display_order: number | null
           icon: string | null
           id: string
+          is_free_tool: boolean | null
           is_premium: boolean | null
           name: string
           route_path: string | null
@@ -112,6 +113,7 @@ export type Database = {
           display_order?: number | null
           icon?: string | null
           id?: string
+          is_free_tool?: boolean | null
           is_premium?: boolean | null
           name: string
           route_path?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           display_order?: number | null
           icon?: string | null
           id?: string
+          is_free_tool?: boolean | null
           is_premium?: boolean | null
           name?: string
           route_path?: string | null
@@ -141,12 +144,15 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          images_used: number
           max_daily_credits: number
           plan: Database["public"]["Enums"]["plan_type"]
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string | null
+          usage_reset_at: string | null
           user_id: string
+          words_used: number
         }
         Insert: {
           created_at?: string | null
@@ -155,12 +161,15 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          images_used?: number
           max_daily_credits?: number
           plan?: Database["public"]["Enums"]["plan_type"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string | null
+          usage_reset_at?: string | null
           user_id: string
+          words_used?: number
         }
         Update: {
           created_at?: string | null
@@ -169,12 +178,15 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          images_used?: number
           max_daily_credits?: number
           plan?: Database["public"]["Enums"]["plan_type"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string | null
+          usage_reset_at?: string | null
           user_id?: string
+          words_used?: number
         }
         Relationships: []
       }
@@ -220,7 +232,16 @@ export type Database = {
         Returns: boolean
       }
       increment_blog_views: { Args: { blog_id: string }; Returns: undefined }
+      reset_monthly_usage: { Args: never; Returns: undefined }
       reset_user_credits: { Args: never; Returns: undefined }
+      use_images: {
+        Args: { _count: number; _user_id: string }
+        Returns: boolean
+      }
+      use_words: {
+        Args: { _user_id: string; _word_count: number }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "user" | "admin"
