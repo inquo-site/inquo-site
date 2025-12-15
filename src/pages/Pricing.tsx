@@ -3,15 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck, Rocket, Globe } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CountrySelector, getSelectedCountry, isIndianUser } from "@/components/CountrySelector";
+import { PaymentModal } from "@/components/PaymentModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(true);
   const [isIndia, setIsIndia] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'starter' | 'pro' | 'business'>('pro');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const country = getSelectedCountry();
@@ -272,6 +278,22 @@ const Pricing = () => {
     window.location.reload();
   };
 
+  const handlePlanSelect = (planName: string) => {
+    if (planName === 'Free') {
+      navigate('/dashboard');
+      return;
+    }
+    
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    const planKey = planName.toLowerCase() as 'starter' | 'pro' | 'business';
+    setSelectedPlan(planKey);
+    setPaymentModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -420,19 +442,18 @@ const Pricing = () => {
                   </div>
                 )}
 
-                <Link to="/dashboard" className="block">
-                  <Button
-                    className={`w-full h-11 font-semibold ${
-                      plan.highlight
-                        ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-                        : ""
-                    }`}
-                    variant={plan.highlight ? "default" : "outline"}
-                  >
-                    {plan.cta}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
+                <Button
+                  className={`w-full h-11 font-semibold ${
+                    plan.highlight
+                      ? "bg-accent hover:bg-accent/90 text-accent-foreground"
+                      : ""
+                  }`}
+                  variant={plan.highlight ? "default" : "outline"}
+                  onClick={() => handlePlanSelect(plan.name)}
+                >
+                  {plan.cta}
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
                 
                 {plan.highlight && (
                   <p className="text-center text-xs text-muted-foreground mt-3">
@@ -527,6 +548,13 @@ const Pricing = () => {
       </div>
 
       <Footer />
+
+      <PaymentModal 
+        open={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        planType={selectedPlan}
+        billingCycle={isYearly ? 'yearly' : 'monthly'}
+      />
     </div>
   );
 };

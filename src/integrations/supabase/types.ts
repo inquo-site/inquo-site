@@ -88,6 +88,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          billing_cycle: string
+          created_at: string
+          currency: string
+          id: string
+          plan_type: string
+          screenshot_url: string | null
+          status: string
+          user_id: string
+          utr_number: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          billing_cycle: string
+          created_at?: string
+          currency?: string
+          id?: string
+          plan_type: string
+          screenshot_url?: string | null
+          status?: string
+          user_id: string
+          utr_number?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          billing_cycle?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          plan_type?: string
+          screenshot_url?: string | null
+          status?: string
+          user_id?: string
+          utr_number?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       tools: {
         Row: {
           badge: string | null
