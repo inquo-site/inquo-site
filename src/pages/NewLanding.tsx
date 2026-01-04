@@ -9,6 +9,11 @@ import { Footer } from "@/components/Footer";
 import { EmailPopup } from "@/components/EmailPopup";
 import { PromotionalBanner } from "@/components/PromotionalBanner";
 import { SEOHead } from "@/components/SEOHead";
+import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
+import { ValueProposition } from "@/components/ValueProposition";
+import { ReviewsSection } from "@/components/ReviewsSection";
+import { InternalLinking } from "@/components/InternalLinking";
+import { useABTest } from "@/hooks/useABTesting";
 import { 
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
@@ -23,6 +28,10 @@ export default function NewLanding() {
   const [freeTools, setFreeTools] = useState(0);
   const [trendingTools, setTrendingTools] = useState<any[]>([]);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
+  
+  // A/B Testing hooks
+  const heroCTA = useABTest('hero_cta');
+  const ctaColor = useABTest('cta_color');
 
   useEffect(() => {
     fetchStats();
@@ -127,30 +136,6 @@ export default function NewLanding() {
     },
   ];
 
-  const testimonials = [
-    {
-      name: "Rahul Sharma",
-      role: "CEO, TechStartup India",
-      avatar: "RS",
-      content: "InQuo.site transformed our content workflow. We produce 5x more content with half the team. The ROI is incredible.",
-      rating: 5
-    },
-    {
-      name: "Priya Patel",
-      role: "Marketing Head, E-commerce Co.",
-      avatar: "PP", 
-      content: "The AI tools for ad copy and social media posts have cut our campaign creation time from days to hours.",
-      rating: 5
-    },
-    {
-      name: "Amit Verma",
-      role: "Freelance Developer",
-      avatar: "AV",
-      content: "Code Generator and Bug Fixer are game changers. I complete projects 3x faster now. Worth every rupee!",
-      rating: 5
-    },
-  ];
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -161,6 +146,11 @@ export default function NewLanding() {
   const handleClosePopup = () => {
     setShowEmailPopup(false);
     localStorage.setItem('inquo_email_popup_seen', 'true');
+  };
+
+  // Track CTA clicks for A/B testing
+  const handleCTAClick = () => {
+    heroCTA.trackEvent('cta_clicked');
   };
 
   return (
@@ -228,11 +218,20 @@ export default function NewLanding() {
               Save 20+ hours every week.
             </p>
 
-            {/* CTAs - B2B focused */}
+            {/* CTAs - B2B focused with A/B Testing */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <Button asChild size="lg" className="text-lg px-10 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all group bg-accent hover:bg-accent/90">
+              <Button 
+                asChild 
+                size="lg" 
+                className={`text-lg px-10 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all group ${
+                  ctaColor.variant === 'gradient' 
+                    ? 'bg-gradient-to-r from-accent to-orange-500 hover:from-accent/90 hover:to-orange-500/90' 
+                    : 'bg-accent hover:bg-accent/90'
+                }`}
+                onClick={handleCTAClick}
+              >
                 <Link to="/dashboard">
-                  Start Free Trial
+                  {heroCTA.variant === 'try_now' ? 'Try Now Free' : 'Start Free Trial'}
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
@@ -433,43 +432,14 @@ export default function NewLanding() {
         </section>
       )}
 
-      {/* Testimonials */}
-      <section className="py-24 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 px-4 py-1">Case Studies</Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              Trusted by <span className="text-gradient">Growing Businesses</span>
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card 
-                key={index} 
-                className="p-8 hover:shadow-xl transition-all duration-300 border-2 hover:border-accent/30 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                  ))}
-                </div>
-                <p className="text-foreground mb-6 italic">"{testimonial.content}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold text-primary-foreground">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Testimonials Carousel */}
+      <TestimonialsCarousel />
+      
+      {/* Value Proposition */}
+      <ValueProposition />
+      
+      {/* Reviews Section */}
+      <ReviewsSection />
 
       {/* Referral Section */}
       <section className="py-24 px-4 bg-gradient-to-br from-accent/10 via-background to-primary/10">
@@ -507,9 +477,15 @@ export default function NewLanding() {
               Join 10,000+ businesses already saving 20+ hours every week with InQuo.Site
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" variant="secondary" className="text-lg px-10 h-14">
+              <Button 
+                asChild 
+                size="lg" 
+                variant="secondary" 
+                className="text-lg px-10 h-14"
+                onClick={handleCTAClick}
+              >
                 <Link to="/dashboard">
-                  Start Free Trial
+                  {heroCTA.variant === 'try_now' ? 'Try Now Free' : 'Start Free Trial'}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
@@ -525,6 +501,9 @@ export default function NewLanding() {
           </Card>
         </div>
       </section>
+
+      {/* Internal Linking Section */}
+      <InternalLinking />
 
       <Footer />
       
