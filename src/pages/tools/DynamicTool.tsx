@@ -28,28 +28,48 @@ const DynamicTool = () => {
 
       try {
         // First try exact tool_type match
-        const { data, error } = await supabase
+        const { data: byToolType } = await supabase
           .from('tools')
           .select('id, name, description, tool_type')
-          .or(`tool_type.eq.${toolType},route_path.eq./tool/${toolType},route_path.eq./tools/${toolType}`)
-          .limit(1)
-          .single();
+          .eq('tool_type', toolType)
+          .limit(1);
 
-        if (!error && data) {
-          setTool(data);
+        if (byToolType && byToolType.length > 0) {
+          setTool(byToolType[0]);
+          setLoading(false);
           return;
         }
 
-        // Fallback: try matching by name derived from slug
-        const nameGuess = decodeURIComponent(toolType).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+        // Try matching by route_path
+        const { data: byRoute } = await supabase
+          .from('tools')
+          .select('id, name, description, tool_type')
+          .or(`route_path.eq./tool/${toolType},route_path.eq./tools/${toolType}`)
+          .limit(1);
+
+        if (byRoute && byRoute.length > 0) {
+          setTool(byRoute[0]);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback: try matching by name derived from slug (handle kebab-case)
+        const nameGuess = decodeURIComponent(toolType)
+          .replace(/-/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
         const { data: byName } = await supabase
           .from('tools')
           .select('id, name, description, tool_type')
-          .ilike('name', nameGuess)
-          .limit(1)
-          .single();
+          .ilike('name', `%${nameGuess}%`)
+          .limit(1);
         
-        setTool(byName || null);
+        if (byName && byName.length > 0) {
+          setTool(byName[0]);
+        } else {
+          setTool(null);
+        }
 
       } catch (error: any) {
         console.error('Error fetching tool:', error);
