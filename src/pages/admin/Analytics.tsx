@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart, Users, DollarSign, Zap, TrendingUp, Activity, Eye, MousePointer } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Users, DollarSign, Zap, TrendingUp, Activity, Eye, MousePointer, Bot, MessageSquare } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, Legend } from "recharts";
 
 interface Stats {
   totalUsers: number;
@@ -29,6 +29,14 @@ interface UserGrowth {
   premium: number;
 }
 
+interface AgentStat {
+  name: string;
+  conversations: number;
+  messages: number;
+  subscribers: number;
+  category: string;
+}
+
 const Analytics = () => {
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
@@ -44,6 +52,10 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [userGrowth, setUserGrowth] = useState<UserGrowth[]>([]);
   const [popularTools, setPopularTools] = useState<ToolUsage[]>([]);
+  const [agentStats, setAgentStats] = useState<AgentStat[]>([]);
+  const [totalAgentConversations, setTotalAgentConversations] = useState(0);
+  const [totalAgentMessages, setTotalAgentMessages] = useState(0);
+  const [activeAgentSubs, setActiveAgentSubs] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,6 +126,32 @@ const Analytics = () => {
         category: tool.category,
       })) || [];
       setPopularTools(toolUsage.sort((a, b) => b.usage - a.usage));
+
+      // Fetch agent analytics (real data)
+      const { data: agents } = await supabase.from('ai_agents').select('id, name, category');
+      const { data: conversations } = await supabase.from('agent_conversations').select('id, agent_id');
+      const { data: messages } = await supabase.from('agent_messages').select('id, conversation_id');
+      const { data: subscriptions } = await supabase.from('agent_subscriptions').select('id, agent_id, status');
+
+      const agentStatsData: AgentStat[] = (agents || []).map(agent => {
+        const agentConvos = (conversations || []).filter(c => c.agent_id === agent.id);
+        const agentConvoIds = new Set(agentConvos.map(c => c.id));
+        const agentMsgs = (messages || []).filter(m => agentConvoIds.has(m.conversation_id));
+        const agentSubs = (subscriptions || []).filter(s => s.agent_id === agent.id && s.status === 'active');
+        return {
+          name: agent.name,
+          conversations: agentConvos.length,
+          messages: agentMsgs.length,
+          subscribers: agentSubs.length,
+          category: agent.category,
+        };
+      }).sort((a, b) => b.conversations - a.conversations);
+
+      setAgentStats(agentStatsData);
+      setTotalAgentConversations((conversations || []).length);
+      setTotalAgentMessages((messages || []).length);
+      setActiveAgentSubs((subscriptions || []).filter(s => s.status === 'active').length);
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -254,7 +292,95 @@ const Analytics = () => {
         </div>
       </Card>
 
-      {/* User Distribution */}
+      {/* Agent Analytics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Total Conversations</p>
+              <h3 className="text-3xl font-bold">{totalAgentConversations}</h3>
+            </div>
+            <div className="p-4 rounded-full bg-primary/10">
+              <MessageSquare className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Total Messages</p>
+              <h3 className="text-3xl font-bold">{totalAgentMessages}</h3>
+            </div>
+            <div className="p-4 rounded-full bg-accent/10">
+              <Bot className="w-8 h-8 text-accent" />
+            </div>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Active Subscriptions</p>
+              <h3 className="text-3xl font-bold">{activeAgentSubs}</h3>
+            </div>
+            <div className="p-4 rounded-full bg-primary/10">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Agent Usage Chart */}
+      {agentStats.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Bot className="w-5 h-5" />
+            Agent Popularity (by Conversations & Messages)
+          </h3>
+          <ResponsiveContainer width="100%" height={350}>
+            <RechartsBarChart data={agentStats.slice(0, 8)}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="name" className="text-xs" angle={-20} textAnchor="end" height={60} />
+              <YAxis className="text-xs" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--background))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px'
+                }}
+              />
+              <Legend />
+              <Bar dataKey="conversations" fill="hsl(var(--primary))" name="Conversations" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="messages" fill="hsl(var(--chart-2))" name="Messages" radius={[4, 4, 0, 0]} />
+            </RechartsBarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+
+      {/* Agent Subscribers Table */}
+      {agentStats.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Agent Subscription Breakdown
+          </h3>
+          <div className="space-y-3">
+            {agentStats.map((agent, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div>
+                  <span className="font-medium">{agent.name}</span>
+                  <span className="text-xs text-muted-foreground ml-2">({agent.category})</span>
+                </div>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{agent.conversations}</span>
+                  <span className="flex items-center gap-1"><Bot className="w-3 h-3" />{agent.messages} msgs</span>
+                  <span className="flex items-center gap-1 font-semibold text-primary"><Users className="w-3 h-3" />{agent.subscribers} subs</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
