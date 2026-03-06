@@ -956,6 +956,7 @@ const AgentChat = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
 
             <Textarea
               ref={textareaRef}
