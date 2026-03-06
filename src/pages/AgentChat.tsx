@@ -228,7 +228,89 @@ const AgentChat = () => {
     }
   };
 
-  const fetchAgent = async () => {
+  const fetchConversations = async () => {
+    if (!user || !agentId) return;
+    setLoadingConversations(true);
+    try {
+      const { data, error } = await supabase
+        .from("agent_conversations")
+        .select("id, title, created_at, updated_at")
+        .eq("user_id", user.id)
+        .eq("agent_id", agentId)
+        .order("updated_at", { ascending: false });
+
+      if (!error && data) {
+        setConversations(data as ConversationItem[]);
+      }
+    } catch (e) {
+      console.error("Error fetching conversations:", e);
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
+
+  const loadConversation = async (convId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("agent_messages")
+        .select("id, role, content, created_at")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      if (data) {
+        setMessages(data.map((m: any) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          created_at: m.created_at,
+        })));
+        setConversationId(convId);
+        setSidebarOpen(false);
+        toast.success("Conversation loaded");
+      }
+    } catch (e) {
+      console.error("Error loading conversation:", e);
+      toast.error("Failed to load conversation");
+    }
+  };
+
+  const deleteConversation = async (convId: string) => {
+    try {
+      await supabase.from("agent_conversations").delete().eq("id", convId);
+      setConversations(prev => prev.filter(c => c.id !== convId));
+      if (conversationId === convId) {
+        setMessages([]);
+        setConversationId(null);
+      }
+      toast.success("Conversation deleted");
+    } catch (e) {
+      toast.error("Failed to delete conversation");
+    }
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    setConversationId(null);
+    setAttachedFiles([]);
+    setSidebarOpen(false);
+  };
+
+  const formatRelativeTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+
     try {
       const { data, error } = await supabase
         .from("ai_agents")
