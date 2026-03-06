@@ -653,13 +653,7 @@ const AgentChat = () => {
     }
   };
 
-  const clearChat = () => {
-    setMessages([]);
-    setConversationId(null);
-    setAttachedFiles([]);
-    toast.success("Chat cleared");
-  };
-
+  // clearChat is replaced by startNewChat
   const copyToClipboard = (content: string, id: string) => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
