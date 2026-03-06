@@ -14,7 +14,8 @@ import {
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
   Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
   CheckCircle2, Zap, Lock, Paperclip, Image, File, X, LinkIcon,
-  Brain, Globe, FileSearch, Database, ChevronDown
+  Brain, Globe, FileSearch, Database, ChevronDown, MessageSquare,
+  PanelLeftOpen, Plus, Clock
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,6 +23,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 
 interface Agent {
@@ -54,6 +62,13 @@ interface AttachedFile {
 interface MemoryItem {
   key: string;
   value: string;
+}
+
+interface ConversationItem {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -154,6 +169,9 @@ const AgentChat = () => {
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [showMemory, setShowMemory] = useState(false);
   const [selectedModel, setSelectedModel] = useState<'gemini' | 'deepseek' | 'chatgpt'>('gemini');
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingConversations, setLoadingConversations] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,6 +182,7 @@ const AgentChat = () => {
       if (user) {
         checkAccess();
         loadMemory();
+        fetchConversations();
       }
     }
   }, [agentId, user]);
@@ -207,6 +226,88 @@ const AgentChat = () => {
     } catch (e) {
       toast.error("Failed to clear memory");
     }
+  };
+
+  const fetchConversations = async () => {
+    if (!user || !agentId) return;
+    setLoadingConversations(true);
+    try {
+      const { data, error } = await supabase
+        .from("agent_conversations")
+        .select("id, title, created_at, updated_at")
+        .eq("user_id", user.id)
+        .eq("agent_id", agentId)
+        .order("updated_at", { ascending: false });
+
+      if (!error && data) {
+        setConversations(data as ConversationItem[]);
+      }
+    } catch (e) {
+      console.error("Error fetching conversations:", e);
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
+
+  const loadConversation = async (convId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("agent_messages")
+        .select("id, role, content, created_at")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      if (data) {
+        setMessages(data.map((m: any) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          created_at: m.created_at,
+        })));
+        setConversationId(convId);
+        setSidebarOpen(false);
+        toast.success("Conversation loaded");
+      }
+    } catch (e) {
+      console.error("Error loading conversation:", e);
+      toast.error("Failed to load conversation");
+    }
+  };
+
+  const deleteConversation = async (convId: string) => {
+    try {
+      await supabase.from("agent_conversations").delete().eq("id", convId);
+      setConversations(prev => prev.filter(c => c.id !== convId));
+      if (conversationId === convId) {
+        setMessages([]);
+        setConversationId(null);
+      }
+      toast.success("Conversation deleted");
+    } catch (e) {
+      toast.error("Failed to delete conversation");
+    }
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    setConversationId(null);
+    setAttachedFiles([]);
+    setSidebarOpen(false);
+  };
+
+  const formatRelativeTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
   const fetchAgent = async () => {
@@ -552,13 +653,7 @@ const AgentChat = () => {
     }
   };
 
-  const clearChat = () => {
-    setMessages([]);
-    setConversationId(null);
-    setAttachedFiles([]);
-    toast.success("Chat cleared");
-  };
-
+  // clearChat is replaced by startNewChat
   const copyToClipboard = (content: string, id: string) => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
@@ -646,9 +741,67 @@ const AgentChat = () => {
                   <Wrench className="w-3 h-3" /> Tools
                 </Badge>
               </div>
+              {/* Conversation History */}
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={() => { setSidebarOpen(true); fetchConversations(); }}>
+                    <MessageSquare className="w-4 h-4 mr-1" /> History
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80 p-0">
+                  <SheetHeader className="p-4 border-b">
+                    <SheetTitle className="flex items-center gap-2 text-base">
+                      <Clock className="w-4 h-4" /> Conversation History
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="p-3">
+                    <Button variant="outline" className="w-full mb-3 gap-2" onClick={startNewChat}>
+                      <Plus className="w-4 h-4" /> New Conversation
+                    </Button>
+                    <ScrollArea className="h-[calc(100vh-180px)]">
+                      {loadingConversations ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : conversations.length === 0 ? (
+                        <div className="text-center py-8 text-sm text-muted-foreground">
+                          <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                          No conversations yet
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {conversations.map((conv) => (
+                            <div
+                              key={conv.id}
+                              className={`group flex items-start gap-2 rounded-lg px-3 py-2.5 cursor-pointer transition-colors hover:bg-muted ${
+                                conversationId === conv.id ? 'bg-primary/10 border border-primary/20' : 'border border-transparent'
+                              }`}
+                              onClick={() => loadConversation(conv.id)}
+                            >
+                              <MessageSquare className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{conv.title}</p>
+                                <p className="text-[11px] text-muted-foreground">{formatRelativeTime(conv.updated_at)}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+                                onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+                              >
+                                <Trash2 className="w-3 h-3 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                </SheetContent>
+              </Sheet>
               {messages.length > 0 && (
-                <Button variant="outline" size="sm" onClick={clearChat}>
-                  <Trash2 className="w-4 h-4 mr-1" /> New Task
+                <Button variant="outline" size="sm" onClick={startNewChat}>
+                  <Plus className="w-4 h-4 mr-1" /> New Task
                 </Button>
               )}
             </div>
