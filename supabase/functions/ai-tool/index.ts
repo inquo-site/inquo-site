@@ -86,7 +86,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream, agentId, webSearch } = await req.json();
+    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream, agentId, webSearch, selectedModel } = await req.json();
 
     if (!prompt && (!files || files.length === 0)) {
       return new Response(
