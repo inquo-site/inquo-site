@@ -64,6 +64,13 @@ interface MemoryItem {
   value: string;
 }
 
+interface ConversationItem {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Bot, Headphones, Target, Search, TrendingUp, FileText, Users, Scale,
   Wrench, DollarSign, Pen, BarChart, Package
