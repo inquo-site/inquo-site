@@ -14,8 +14,14 @@ import {
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
   Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
   CheckCircle2, Zap, Lock, Paperclip, Image, File, X, LinkIcon,
-  Brain, Globe, FileSearch, Database
+  Brain, Globe, FileSearch, Database, ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 interface Agent {
@@ -147,6 +153,7 @@ const AgentChat = () => {
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [showMemory, setShowMemory] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'deepseek' | 'chatgpt'>('gemini');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -428,6 +435,7 @@ const AgentChat = () => {
         stream: true,
         agentId: agentId,
         webSearch: webSearchEnabled,
+        selectedModel: selectedModel,
       };
 
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tool`;
@@ -920,6 +928,34 @@ const AgentChat = () => {
               >
                 <Brain className="w-4 h-4" />
               </Button>
+
+              {/* Model Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-xs gap-1 px-2"
+                    disabled={sending || !hasAccess}
+                  >
+                    {selectedModel === 'gemini' && '✨ Gemini'}
+                    {selectedModel === 'deepseek' && '🐋 DeepSeek'}
+                    {selectedModel === 'chatgpt' && '🤖 ChatGPT'}
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => { setSelectedModel('gemini'); toast.success('Model: Gemini'); }}>
+                    ✨ Gemini Flash
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSelectedModel('deepseek'); toast.success('Model: DeepSeek'); }}>
+                    🐋 DeepSeek
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSelectedModel('chatgpt'); toast.success('Model: ChatGPT'); }}>
+                    🤖 ChatGPT
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <Textarea
@@ -943,7 +979,7 @@ const AgentChat = () => {
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
             {hasAccess 
-              ? `🧠 Memory${memoryItems.length > 0 ? ` (${memoryItems.length})` : ''} • 🔍 ${webSearchEnabled ? 'Search ON' : 'Search OFF'} • 📎 Files • 🔗 Links • 🛠️ Pro Tools` 
+              ? `🧠 Memory${memoryItems.length > 0 ? ` (${memoryItems.length})` : ''} • 🔍 ${webSearchEnabled ? 'Search ON' : 'Search OFF'} • 📎 Files • 🔗 Links • ${selectedModel === 'gemini' ? '✨ Gemini' : selectedModel === 'deepseek' ? '🐋 DeepSeek' : '🤖 ChatGPT'}` 
               : "Subscribe to unlock this agent's capabilities."}
           </p>
         </div>
