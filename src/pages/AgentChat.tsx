@@ -182,6 +182,7 @@ const AgentChat = () => {
       if (user) {
         checkAccess();
         loadMemory();
+        fetchConversations();
       }
     }
   }, [agentId, user]);
