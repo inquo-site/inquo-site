@@ -517,63 +517,53 @@ export default function NewLanding() {
       <ReviewsSection />
 
       {/* Referral Section */}
-      <section className="py-24 px-4 bg-gradient-to-br from-accent/10 via-background to-primary/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <Badge className="mb-4 px-4 py-1 bg-accent/20 text-accent border-accent/30">Referral Program</Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-            Invite & Earn <span className="text-accent">20% Commission</span>
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Share InQuo.Site with your network and earn 20% lifetime commission on every referral. 
-            No limits, no caps — grow your passive income!
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild size="lg" className="bg-accent hover:bg-accent/90">
-              <Link to="/auth">
-                Join Referral Program
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/pricing">
-                Learn More
-              </Link>
-            </Button>
-          </div>
+      <section className="relative py-28 px-4 overflow-hidden">
+        <NSBackdrop intensity="subtle" />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <Reveal>
+            <div className="text-xs uppercase tracking-[0.25em] text-primary mb-5">Referral Program</div>
+            <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl tracking-[-0.035em] leading-[1] mb-6">
+              Invite &amp; earn <span className="font-script text-primary">20%</span> commission
+            </h2>
+            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
+              Share InQuo.Site with your network and earn 20% lifetime commission. No caps, no limits.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <NSCta to="/auth" size="lg">Join Referral Program</NSCta>
+              <NSCta to="/pricing" size="lg" variant="outline">Learn More</NSCta>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <Card className="p-12 bg-gradient-to-br from-primary to-accent text-primary-foreground">
-            <h3 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Automate Your Business?</h3>
-            <p className="text-lg mb-8 opacity-90">
-              Join 10,000+ businesses already saving 20+ hours every week with InQuo.Site
+      {/* Final CTA Section — Never Settle big-statement */}
+      <section className="relative py-32 px-4 overflow-hidden bg-background">
+        <NSBackdrop intensity="hero" />
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <Reveal>
+            <h3 className="font-display text-4xl sm:text-6xl lg:text-7xl tracking-[-0.04em] leading-[0.95] mb-6">
+              Ready to <span className="font-script text-primary">automate</span>
+              <br /> your business?
+            </h3>
+          </Reveal>
+          <Reveal delay={150}>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
+              Join 10,000+ teams already saving 20+ hours a week with InQuo.
             </p>
+          </Reveal>
+          <Reveal delay={280}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button 
-                asChild 
-                size="lg" 
-                variant="secondary" 
-                className="text-lg px-10 h-14"
-                onClick={handleCTAClick}
-              >
-                <Link to="/dashboard">
-                  {heroCTA.variant === 'try_now' ? 'Try Now Free' : 'Start Free Trial'}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg px-10 h-14 bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-                <Link to="/pricing">
-                  View Business Plans
-                </Link>
-              </Button>
+              <NSCta to="/dashboard" size="lg" onClick={handleCTAClick}>
+                Start Free Trial
+              </NSCta>
+              <NSCta to="/pricing" size="lg" variant="outline">
+                Upgrade to Pro
+              </NSCta>
             </div>
-            <p className="mt-6 text-sm opacity-75">
-              ✓ 7-day free trial • ✓ No credit card required • ✓ Cancel anytime
+            <p className="mt-8 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              7-day trial <span className="text-primary mx-2">/</span> No card required <span className="text-primary mx-2">/</span> Cancel anytime
             </p>
-          </Card>
+          </Reveal>
         </div>
       </section>
 
