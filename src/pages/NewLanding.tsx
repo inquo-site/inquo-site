@@ -394,51 +394,48 @@ export default function NewLanding() {
 
       {/* Trending Tools */}
       {trendingTools.length > 0 && (
-        <section className="py-24 px-4 bg-muted/30">
+        <section className="relative py-28 px-4 overflow-hidden">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
-              <div>
-                <Badge className="mb-4 px-4 py-1" variant="secondary">🔥 Popular Tools</Badge>
-                <h2 className="text-3xl sm:text-4xl font-bold mb-2">
-                  Try These Free Tools
-                </h2>
-                <p className="text-lg text-muted-foreground">
-                  No login required for free tools — start using instantly
-                </p>
+            <Reveal>
+              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-14 gap-6">
+                <div className="max-w-2xl">
+                  <div className="text-xs uppercase tracking-[0.25em] text-primary mb-5 flex items-center gap-3">
+                    <span className="h-px w-8 bg-primary/60" /> Popular Tools
+                  </div>
+                  <h2 className="font-display text-4xl sm:text-5xl tracking-[-0.035em] leading-[1]">
+                    Try these <span className="font-script text-primary">free</span> tools
+                  </h2>
+                  <p className="mt-5 text-muted-foreground">No login required — start using instantly.</p>
+                </div>
+                <NSCta to="/dashboard" variant="outline">View All 160+ Tools</NSCta>
               </div>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/dashboard">
-                  View All 160+ Tools
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
-            </div>
+            </Reveal>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {trendingTools.map((tool, index) => {
                 const path = tool.route_path || `/tool/${tool.tool_type}`;
                 return (
-                  <Link key={tool.id} to={path}>
-                    <Card className="p-6 h-full hover:scale-[1.02] transition-all duration-300 cursor-pointer hover:shadow-xl border-2 hover:border-accent/50 animate-fade-in group"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                          <Sparkles className="w-6 h-6 text-accent" />
+                  <Reveal key={tool.id} delay={index * 80}>
+                    <Link to={path} className="group block h-full">
+                      <div className="ns-lift relative h-full p-7 rounded-2xl border border-border bg-card overflow-hidden">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="w-11 h-11 rounded-xl border border-border flex items-center justify-center group-hover:border-primary/60 transition-colors">
+                            <Sparkles className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            {tool.is_free_tool ? 'Free' : 'Pro'}
+                          </span>
                         </div>
-                        <Badge variant={tool.is_free_tool ? 'outline' : 'default'} className="font-medium">
-                          {tool.is_free_tool ? '🆓 Free' : '⭐ Pro'}
-                        </Badge>
+                        <h3 className="font-display text-xl mb-2 tracking-tight group-hover:text-primary transition-colors">{tool.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed">
+                          {tool.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm ns-link">
+                          Try Now <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" />
+                        </div>
                       </div>
-                      <h3 className="text-lg font-bold mb-2 group-hover:text-accent transition-colors">{tool.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-5 line-clamp-2">
-                        {tool.description}
-                      </p>
-                      <Button variant="outline" size="sm" className="w-full group-hover:bg-accent group-hover:text-accent-foreground group-hover:border-accent transition-colors">
-                        Try Now <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </Card>
-                  </Link>
+                    </Link>
+                  </Reveal>
                 );
               })}
             </div>
