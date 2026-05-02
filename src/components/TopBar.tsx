@@ -74,12 +74,18 @@ export function TopBar() {
 
   if (!user) {
     return (
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold">InQuo.site</h1>
-          <Button onClick={() => navigate('/auth')} variant="default">
+          <h1 className="font-display text-xl tracking-tight">InQuo</h1>
+          <button
+            onClick={() => navigate('/auth')}
+            className="group inline-flex items-center gap-2.5 rounded-full bg-foreground text-background px-5 py-2 text-sm font-medium transition-all duration-500 hover:bg-primary hover:-translate-y-0.5 hover:shadow-[0_18px_50px_-12px_hsl(36_45%_70%/0.45)]"
+          >
             Sign In
-          </Button>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-background/90 text-primary transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+              <span className="text-xs">↗</span>
+            </span>
+          </button>
         </div>
       </div>
     );
