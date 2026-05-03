@@ -53,9 +53,11 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="relative bg-card border-t border-border ns-grain overflow-hidden">
+      {/* Decorative gold glow */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
       {/* Newsletter Section */}
-      <div className="border-b border-border">
+      <div className="relative border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="text-center lg:text-left">
