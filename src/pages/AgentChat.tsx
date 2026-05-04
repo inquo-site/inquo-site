@@ -531,7 +531,7 @@ const AgentChat = () => {
       const requestBody = {
         prompt: userMessage || "Analyze the attached files and provide detailed insights based on the content.",
         toolType: "agent-chat",
-        systemPrompt: agent?.system_prompt,
+        // systemPrompt is loaded server-side from the agent record (not exposed to clients)
         messages: messageHistory,
         files: filesPayload.length > 0 ? filesPayload : undefined,
         stream: true,
