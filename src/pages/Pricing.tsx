@@ -120,6 +120,8 @@ const Pricing = () => {
     { icon: Shield, title: "Private & Secure", desc: "Your data is encrypted. We never train models on your prompts." },
     { icon: Headphones, title: "Priority Support", desc: "Email support with quick response — token buyers get priority." },
   ];
+
+  const faqs = [
     {
       q: "How does the token system work?",
       a: `Buy any number of tokens you need. Tools cost 1–2 tokens per use, agents cost 5–15 tokens per task. Tokens never expire on paid packs.`,
