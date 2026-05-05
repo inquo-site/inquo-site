@@ -38,6 +38,14 @@ import {
   Check,
   Calculator,
   Info,
+  Image as ImageIcon,
+  FileText,
+  MessageSquare,
+  Code2,
+  Shield,
+  Headphones,
+  Infinity as InfinityIcon,
+  Rocket,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -99,6 +107,18 @@ const Pricing = () => {
     { icon: Wrench, label: "AI Tools", cost: "1–2 tokens", note: "Per use (grammar, summarizer, ad copy, etc.)" },
     { icon: Bot, label: "AI Agents", cost: "5–15 tokens", note: "Per task (depending on complexity & length)" },
     { icon: Sparkles, label: "Image Gen", cost: "5–10 tokens", note: "Per image (size & model dependent)" },
+  ];
+
+  const includedFeatures = [
+    { icon: Wrench, title: "160+ AI Tools", desc: "Grammar fixer, summarizer, ad copy, blog generator, code helper & more — all unlocked." },
+    { icon: Bot, title: "All AI Agents", desc: "Use every autonomous agent — research, writing, marketing, coding — nothing locked." },
+    { icon: ImageIcon, title: "AI Image Generation", desc: "Generate images with your tokens. No daily caps, no watermarks." },
+    { icon: MessageSquare, title: "Multi-Model Chat", desc: "Chat with Gemini, ChatGPT, and DeepSeek — switch any time." },
+    { icon: FileText, title: "File & Link Analysis", desc: "Upload documents up to 10MB or paste any link — agents read & understand." },
+    { icon: Code2, title: "Code & Dev Tools", desc: "Code generator, debugger, explainer — speed up your dev workflow." },
+    { icon: InfinityIcon, title: "Tokens Never Expire", desc: "Purchased tokens stay in your wallet forever — use them whenever." },
+    { icon: Shield, title: "Private & Secure", desc: "Your data is encrypted. We never train models on your prompts." },
+    { icon: Headphones, title: "Priority Support", desc: "Email support with quick response — token buyers get priority." },
   ];
 
   const faqs = [
@@ -299,7 +319,40 @@ const Pricing = () => {
             </div>
           </div>
 
-          {/* Free tier highlight */}
+          {/* Everything You Get */}
+          <div className="mb-16">
+            <div className="text-center mb-10">
+              <Badge className="mb-4 px-4 py-1">
+                <Rocket className="w-3 h-3 mr-1" />
+                Everything Included
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-3">
+                What you get with <span className="text-gradient">every token</span>
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                One token wallet unlocks the entire platform. No locked tiers, no upsells — just buy tokens and use anything.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {includedFeatures.map((f, i) => (
+                <Card
+                  key={i}
+                  className="p-5 border hover:border-accent/50 hover:shadow-lg transition-all group"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                      <f.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold mb-1">{f.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
           <Card className="p-6 mb-16 border-2 border-dashed border-accent/40 bg-accent/5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center text-accent flex-shrink-0">
               <Gift className="w-6 h-6" />

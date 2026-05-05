@@ -10,7 +10,7 @@ import { EmailPopup } from "@/components/EmailPopup";
 import { SEOHead } from "@/components/SEOHead";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ValueProposition } from "@/components/ValueProposition";
-import { ReviewsSection } from "@/components/ReviewsSection";
+
 import { InternalLinking } from "@/components/InternalLinking";
 import { useABTest } from "@/hooks/useABTesting";
 import { NSCta } from "@/components/ns/NSCta";
@@ -510,9 +510,6 @@ export default function NewLanding() {
       {/* Value Proposition */}
       <ValueProposition />
       
-      {/* Reviews Section */}
-      <ReviewsSection />
-
       {/* Referral Section */}
       <section className="relative py-28 px-4 overflow-hidden">
         <NSBackdrop intensity="subtle" />
