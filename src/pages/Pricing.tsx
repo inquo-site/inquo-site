@@ -38,6 +38,14 @@ import {
   Check,
   Calculator,
   Info,
+  Image as ImageIcon,
+  FileText,
+  MessageSquare,
+  Code2,
+  Shield,
+  Headphones,
+  Infinity as InfinityIcon,
+  Rocket,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
