@@ -44,12 +44,21 @@ interface Agent {
   monthly_price: number;
 }
 
+interface ToolCallEvent {
+  id: string;
+  name: string;
+  arguments?: any;
+  result?: string;
+  status: "running" | "done";
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
   attachments?: AttachedFile[];
+  toolCalls?: ToolCallEvent[];
 }
 
 interface AttachedFile {
