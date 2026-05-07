@@ -959,11 +959,53 @@ const AgentChat = () => {
                         ))}
                       </div>
                     )}
+                    {/* Tool-call chips (function calling) */}
+                    {message.role === "assistant" && message.toolCalls && message.toolCalls.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mb-2">
+                        {message.toolCalls.map((tc) => {
+                          const icon = tc.name === "web_search" ? "🔍" : tc.name === "calculator" ? "🧮" : tc.name === "current_datetime" ? "🕒" : "🔧";
+                          const argPreview = tc.arguments
+                            ? Object.values(tc.arguments).join(", ").slice(0, 60)
+                            : "";
+                          return (
+                            <details
+                              key={tc.id}
+                              className={`group rounded-lg border text-xs transition-all ${
+                                tc.status === "running"
+                                  ? "border-primary/40 bg-primary/5 animate-pulse"
+                                  : "border-border bg-muted/40"
+                              }`}
+                            >
+                              <summary className="flex items-center gap-2 px-3 py-1.5 cursor-pointer list-none">
+                                <span>{icon}</span>
+                                <span className="font-mono font-medium">{tc.name}</span>
+                                {argPreview && <span className="text-muted-foreground truncate max-w-[200px]">({argPreview})</span>}
+                                {tc.status === "running" ? (
+                                  <Loader2 className="w-3 h-3 animate-spin ml-auto text-primary" />
+                                ) : (
+                                  <CheckCircle2 className="w-3 h-3 ml-auto text-green-500" />
+                                )}
+                                <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
+                              </summary>
+                              {tc.result && (
+                                <pre className="px-3 pb-2 pt-1 text-[11px] whitespace-pre-wrap font-mono text-muted-foreground border-t border-border/50 max-h-40 overflow-auto">
+                                  {tc.result}
+                                </pre>
+                              )}
+                            </details>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className={`rounded-2xl px-4 py-3 ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       {message.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
-                        </div>
+                        message.content ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground italic">Thinking...</div>
+                        )
                       ) : (
                         <p className="whitespace-pre-wrap">{message.content}</p>
                       )}
