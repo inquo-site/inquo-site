@@ -44,12 +44,21 @@ interface Agent {
   monthly_price: number;
 }
 
+interface ToolCallEvent {
+  id: string;
+  name: string;
+  arguments?: any;
+  result?: string;
+  status: "running" | "done";
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
   attachments?: AttachedFile[];
+  toolCalls?: ToolCallEvent[];
 }
 
 interface AttachedFile {
@@ -531,13 +540,13 @@ const AgentChat = () => {
       const requestBody = {
         prompt: userMessage || "Analyze the attached files and provide detailed insights based on the content.",
         toolType: "agent-chat",
-        // systemPrompt is loaded server-side from the agent record (not exposed to clients)
         messages: messageHistory,
         files: filesPayload.length > 0 ? filesPayload : undefined,
         stream: true,
         agentId: agentId,
         webSearch: webSearchEnabled,
         selectedModel: selectedModel,
+        enableTools: true,
       };
 
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tool`;
@@ -564,6 +573,7 @@ const AgentChat = () => {
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantSoFar = "";
+      let toolCallsAcc: ToolCallEvent[] = [];
       let streamDone = false;
 
       const assistantMsgId = `temp-${Date.now()}-assistant`;
@@ -572,7 +582,15 @@ const AgentChat = () => {
         role: "assistant" as const,
         content: "",
         created_at: new Date().toISOString(),
+        toolCalls: [],
       }]);
+
+      const updateAssistant = () => {
+        const displayContent = assistantSoFar.replace(/<MEMORY>[\s\S]*?<\/MEMORY>/g, '').trim();
+        setMessages(prev =>
+          prev.map(m => m.id === assistantMsgId ? { ...m, content: displayContent, toolCalls: [...toolCallsAcc] } : m)
+        );
+      };
 
       while (!streamDone) {
         const { done, value } = await reader.read();
@@ -589,21 +607,33 @@ const AgentChat = () => {
           if (!line.startsWith("data: ")) continue;
 
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
 
           try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-              // Show content without memory block in real-time
-              const displayContent = assistantSoFar.replace(/<MEMORY>[\s\S]*?<\/MEMORY>/g, '').trim();
-              setMessages(prev =>
-                prev.map(m => m.id === assistantMsgId ? { ...m, content: displayContent } : m)
+            const evt = JSON.parse(jsonStr);
+            if (evt.error) {
+              toast.error(evt.error);
+              continue;
+            }
+            if (evt.type === "content" && evt.delta) {
+              assistantSoFar += evt.delta;
+              updateAssistant();
+            } else if (evt.type === "tool_call_start") {
+              toolCallsAcc.push({
+                id: evt.id,
+                name: evt.name,
+                arguments: evt.arguments,
+                status: "running",
+              });
+              updateAssistant();
+            } else if (evt.type === "tool_call_end") {
+              toolCallsAcc = toolCallsAcc.map(tc =>
+                tc.id === evt.id ? { ...tc, status: "done", result: evt.result } : tc
               );
+              updateAssistant();
+            } else if (evt.type === "done") {
+              streamDone = true;
+              break;
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -612,29 +642,10 @@ const AgentChat = () => {
         }
       }
 
-      // Final flush
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split("\n")) {
-          if (!raw) continue;
-          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (raw.startsWith(":") || raw.trim() === "") continue;
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-            }
-          } catch { /* ignore */ }
-        }
-      }
-
       // Extract memory and clean response
       const cleanedContent = await extractAndSaveMemory(assistantSoFar);
       setMessages(prev =>
-        prev.map(m => m.id === assistantMsgId ? { ...m, content: cleanedContent } : m)
+        prev.map(m => m.id === assistantMsgId ? { ...m, content: cleanedContent, toolCalls: [...toolCallsAcc] } : m)
       );
 
       if (convId) await saveMessage(convId, "assistant", cleanedContent);
@@ -948,11 +959,53 @@ const AgentChat = () => {
                         ))}
                       </div>
                     )}
+                    {/* Tool-call chips (function calling) */}
+                    {message.role === "assistant" && message.toolCalls && message.toolCalls.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mb-2">
+                        {message.toolCalls.map((tc) => {
+                          const icon = tc.name === "web_search" ? "🔍" : tc.name === "calculator" ? "🧮" : tc.name === "current_datetime" ? "🕒" : "🔧";
+                          const argPreview = tc.arguments
+                            ? Object.values(tc.arguments).join(", ").slice(0, 60)
+                            : "";
+                          return (
+                            <details
+                              key={tc.id}
+                              className={`group rounded-lg border text-xs transition-all ${
+                                tc.status === "running"
+                                  ? "border-primary/40 bg-primary/5 animate-pulse"
+                                  : "border-border bg-muted/40"
+                              }`}
+                            >
+                              <summary className="flex items-center gap-2 px-3 py-1.5 cursor-pointer list-none">
+                                <span>{icon}</span>
+                                <span className="font-mono font-medium">{tc.name}</span>
+                                {argPreview && <span className="text-muted-foreground truncate max-w-[200px]">({argPreview})</span>}
+                                {tc.status === "running" ? (
+                                  <Loader2 className="w-3 h-3 animate-spin ml-auto text-primary" />
+                                ) : (
+                                  <CheckCircle2 className="w-3 h-3 ml-auto text-green-500" />
+                                )}
+                                <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
+                              </summary>
+                              {tc.result && (
+                                <pre className="px-3 pb-2 pt-1 text-[11px] whitespace-pre-wrap font-mono text-muted-foreground border-t border-border/50 max-h-40 overflow-auto">
+                                  {tc.result}
+                                </pre>
+                              )}
+                            </details>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className={`rounded-2xl px-4 py-3 ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       {message.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
-                        </div>
+                        message.content ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground italic">Thinking...</div>
+                        )
                       ) : (
                         <p className="whitespace-pre-wrap">{message.content}</p>
                       )}
