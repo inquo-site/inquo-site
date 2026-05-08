@@ -22,6 +22,7 @@ import BlogPost from "./pages/BlogPost";
 import Projects from "./pages/Projects";
 import Agents from "./pages/Agents";
 import AgentChat from "./pages/AgentChat";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
